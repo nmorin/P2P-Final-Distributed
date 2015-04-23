@@ -1,6 +1,8 @@
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
@@ -16,6 +18,7 @@ import java.rmi.server.UnicastRemoteObject;
 public class Peer implements PeerInterface {
 
 	private ServerSocket serverSocket;
+    private static PeerInterface boundPeerStub;
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
     // private List<String> filesAlreadySplit;
@@ -59,23 +62,24 @@ public class Peer implements PeerInterface {
         return idString;
     }
 
-    private static void createAndBindSelf(int portNum) {
+    private static void createAndBindSelf(int myPortNum, int theirPortNum) {
          try {
+            // Bind hardcoded peer
+            if (myPortNum != 5000) {
+                String nameOfPeer = Integer.toString(theirPortNum);
+                Registry theirReg = LocateRegistry.getRegistry("localhost", theirPortNum);
+                boundPeerStub = (PeerInterface) theirReg.lookup(nameOfPeer);
+                System.out.println("Found peer " + nameOfPeer);
+            }
+
             // String name = createRandomID();
-            String name = String.valueOf(portNum);
+            String name = String.valueOf(myPortNum);
             Peer peer = new Peer();
             PeerInterface peerStub = (PeerInterface) UnicastRemoteObject.exportObject(peer, 0);
-            Registry registry = LocateRegistry.createRegistry(portNum);
+            Registry registry = LocateRegistry.createRegistry(myPortNum);
             registry.bind(name, peerStub);
             System.out.println("Binding complete");
 
-
-            if (portNum != 8765) {
-                String name2 = "8765";
-                PeerInterface otherPeer = (PeerInterface) registry.lookup(name2);
-                byte[] answer = otherPeer.requestFile("YOLO.txt");
-                System.out.println(answer);
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,11 +88,30 @@ public class Peer implements PeerInterface {
 
 	public static void main(String[] argv) {
         String host = (argv.length < 1) ? "localhost" : argv[0];
-        int portNumReceive = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
-        int portNumOut = (argv.length < 3) ? 5001 : Integer.parseInt(argv[2]);
+        int myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
+        int theirPortNum = (argv.length < 3) ? 5001 : Integer.parseInt(argv[2]);
         String fileName = "YOLO.txt";
+        System.out.println("My portnum: " + myPortNum + "\n Their port num: " + theirPortNum + "\n");
 
-        createAndBindSelf(portNumOut);
+        createAndBindSelf(myPortNum, theirPortNum);
+
+        if (myPortNum != 5000) {
+            try {
+                byte[] result;
+                System.out.println("Looking for file YOLO.txt");
+                result = boundPeerStub.requestFile("YOLO.txt");
+
+                File outFile = new File("result.txt");
+                FileOutputStream fileOutput = new FileOutputStream(outFile, true);
+                fileOutput.write(result);
+                fileOutput.close();
+                System.out.println("Here");
+
+            } catch (Exception e) {
+                System.out.println("Exception");
+                e.printStackTrace();
+            }
+        }
         
     }
 
