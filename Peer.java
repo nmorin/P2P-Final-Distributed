@@ -2,15 +2,19 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.*;
+
+import java.util.Scanner;
+import java.util.Random;
+import java.util.*;
+import java.util.ArrayList;
+
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Random;
 
 import java.rmi.*;
-import java.util.ArrayList;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
@@ -21,25 +25,17 @@ public class Peer implements PeerInterface {
     private static PeerInterface boundPeerStub;
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
+    private static List<String> peerList;
+    private static Map<String, PeerInterface> peerStubs;
     // private List<String> filesAlreadySplit;
 
 
 	public Peer() {
-        // filesAlreadySplit = new ArrayList<String>(); 
-		super();
+        super();
+
+        peerList = new ArrayList<String>(); 
+        peerStubs = new HashMap<String, PeerInterface>();
 	}
-
-    // public byte[] requestFile(String fileName, String peerId, List<Integer> piecesLeftToDownload) {
-    //     if (!filesAlreadySplit.contains(fileName)) {
-    //         splitFile(fileName);
-    //     }
-    //     FileInputStream fileInput = new FileInputStream();
-    //     byte[] fileBytes = new byte[(int) file.length()];
-    //     bytesRead = fileInput.read(fileBytes, 0, (int) file.length());
-    //     assert(bytesRead == fileBytes.length);
-    //     assert(bytesRead == (int) file.length());
-
-    // }
 
     public byte[] requestFile(String fileName) {
         try {
@@ -62,22 +58,15 @@ public class Peer implements PeerInterface {
         return idString;
     }
 
-    private static void createAndBindSelf(int myPortNum, int theirPortNum) {
+    private static void createAndBindSelf(int myPortNum, String myName) {
          try {
-            // Bind hardcoded peer
-            if (myPortNum != 5000) {
-                String nameOfPeer = Integer.toString(theirPortNum);
-                Registry theirReg = LocateRegistry.getRegistry("localhost", theirPortNum);
-                boundPeerStub = (PeerInterface) theirReg.lookup(nameOfPeer);
-                System.out.println("Found peer " + nameOfPeer);
-            }
-
+            // Commented out names to perform hardcoded testing
             // String name = createRandomID();
-            String name = String.valueOf(myPortNum);
+            // String name = String.valueOf(myPortNum);
             Peer peer = new Peer();
             PeerInterface peerStub = (PeerInterface) UnicastRemoteObject.exportObject(peer, 0);
             Registry registry = LocateRegistry.createRegistry(myPortNum);
-            registry.bind(name, peerStub);
+            registry.bind(myName, peerStub);
             System.out.println("Binding complete");
 
         } catch (Exception e) {
@@ -86,30 +75,80 @@ public class Peer implements PeerInterface {
 
     }
 
+    private static void connectToPeer(String peerName, int peerPort) {
+        try {
+            Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
+            boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
+            peerStubs.put(peerName, boundPeerStub);
+            System.out.println("Found peer " + peerName);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void makeRequest(String peerName, String fileName) {
+        try {
+            byte[] result;
+            System.out.println("Looking for file " + fileName);
+            result = peerStubs.get(peerName).requestFile(fileName);
+
+            File outFile = new File("result.txt");
+            FileOutputStream fileOutput = new FileOutputStream(outFile, true);
+            fileOutput.write(result);
+            fileOutput.close();
+            System.out.println("Got file");
+
+        } catch (Exception e) {
+            System.out.println("Exception");
+            e.printStackTrace();
+        }
+        
+    }
+
+    /* to run: 
+    java Peer localhost <your name> <your port>
+    to connect to more peers: first start them on their ports, then enter command:
+    connect <their name> <their port>
+    to request file, enter command:
+    request <their name>
+    */
 	public static void main(String[] argv) {
         String host = (argv.length < 1) ? "localhost" : argv[0];
         int myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
-        int theirPortNum = (argv.length < 3) ? 5001 : Integer.parseInt(argv[2]);
+        String myName = (argv.length < 3) ? "Howard" : (argv[2]);
+
         String fileName = "YOLO.txt";
-        System.out.println("My portnum: " + myPortNum + "\n Their port num: " + theirPortNum + "\n");
 
-        createAndBindSelf(myPortNum, theirPortNum);
+        System.out.println("My portnum: " + myPortNum + "\n My name: " + myName + "\n");
 
-        if (myPortNum != 5000) {
-            try {
-                byte[] result;
-                System.out.println("Looking for file YOLO.txt");
-                result = boundPeerStub.requestFile("YOLO.txt");
+        createAndBindSelf(myPortNum, myName);
 
-                File outFile = new File("result.txt");
-                FileOutputStream fileOutput = new FileOutputStream(outFile, true);
-                fileOutput.write(result);
-                fileOutput.close();
-                System.out.println("Here");
+        Scanner keyboard = new Scanner(System.in);
+        /* Infinite loop that will query the user to input commands. To
+        exit, type 'exit'. */
+        while (true) {
+            System.out.println("Enter a command");
+            String command = keyboard.nextLine();
+            String parsedRequest[] = command.split(" ");
+            String secondPartOfRequest = "";
 
-            } catch (Exception e) {
-                System.out.println("Exception");
-                e.printStackTrace();
+            // Add a peer
+            if (parsedRequest[0].equals("connect")) {
+                String name = parsedRequest[1];
+                int port = Integer.parseInt(parsedRequest[2]);
+                connectToPeer(name, port);
+            }
+
+            // Request a file
+            else if (parsedRequest[0].equals("request")) {
+                String peerName = parsedRequest[1];
+                makeRequest(peerName, fileName);
+            }
+
+            else if (parsedRequest[0].equals("exit")) {
+                System.out.println("Goodbye!");
+                break;
             }
         }
         
