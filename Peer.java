@@ -27,7 +27,7 @@ public class Peer implements PeerInterface {
     private final int ID_MIN = 100000000;
     private static List<String> peerList;
     private static Map<String, PeerInterface> peerStubs;
-    // private List<String> filesAlreadySplit;
+    private List<String> filesAlreadySplit;
 
 
 	public Peer() {
@@ -154,116 +154,77 @@ public class Peer implements PeerInterface {
         
     }
 
+    private void splitFile(String fileName) {
+    	File inputFile = new File(fileName);
+    	FileInputStream inputStream;
+    	String newFileName;
+    	FileOutputStream filePiece;
+    	int fileSize = (int) inputFile.length();
+    	byte pieceSize = 50;
+    	int numPieces = 0, read = 0, readLength = pieceSize;
+    	byte[] bytePiecePart;
 
-    // private static void sendFile(String fileName) {
+    	try {
+    		inputStream = new FileInputStream(inputFile);
+    		while (fileSize > 0) {
+    			if (fileSize <= pieceSize) {
+    				readLength = fileSize;
+    			}
 
-    // 	File sendingFile = new File(fileName);
+    			bytePiecePart = new byte[readLength];
+    			read = inputStream.read(bytePiecePart, 0, readLength);
+    			fileSize -= read;
 
-    // 	while (true) {
-    // 		try {
-    // 			System.out.println("Waiting for client on port " + serverSocket.getLocalPort());
-    			
-    // 			Socket incomingClient = serverSocket.accept();
-    // 			System.out.println("Connected to " + incomingClient.getRemoteSocketAddress());
+    			assert (read == bytePiecePart.length);
+    			numPieces++;
+    			newFileName = fileName + ".part" + Integer.toString(numPieces - 1);
+    			filePiece = new FileOutputStream(new File(newFileName));
+    			filePiece.write(bytePiecePart);
+    			filePiece.flush();
+    			filePiece.close();
+    			bytePiecePart = null;
+    			filePiece = null;
+    		}
+    		inputStream.close();
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
 
-    // 			byte[] byteArray = new byte[(int) myFile.length()];
-    // 			BufferedInputStream fileInput = new BufferedInputStream(new FileInputStream(sendingFile));
-    // 			fileInput.read(byteArray, 0, byteArray.length);
-    // 			OutputStream output = incomingClient.getOutputStream();
-    // 			output.write(byteArray, 0, byteArray.length);
-    // 			output.flush();
-    // 			incomingClient.close();
-    // 		} catch (Exception e) {
-    // 			e.printStackTrace();
-    // 		}
-    // 	}
-    // }
+        filesAlreadySplit.add(fileName);
 
-    // private static void receiveFile(Socket socket) {
-    // 	String fileName = "Received_TestFileRabbit.txt";
-    // 	byte[] byteArray = new byte[1024];
-    // 	BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    // 	BufferedReader output = new BufferedReader(new OutputStreamReader(socket.getOutputStream()));
+    }
 
-    // 	FileOutputStream fileOut = new FileOutputStream(fileName);
-    // 	BufferedOutputStream bufferedFileOut = new BufferedOutputStream(fileOut);
-    // 	int bytesRead = input.read(byteArray, 0, byteArray.length);
-    // 	bufferedFileOut.write(byteArray, 0, bytesRead);
+    private void mergeFile(String fileName, int numPieces) {
+    	File outFile = new File(fileName);
+    	FileOutputStream fileOutput;
+    	FileInputStream fileInput;
+    	byte[] fileBytes;
+    	int bytesRead = 0;
+    	List<File> list = new ArrayList<File>();
+    	for (int i = 0; i < numPieces; i++) {
+    		list.add(new File(fileName + ".part" + Integer.toString(i)));
+    	}
 
-    // 	bufferedFileOut.close();
-    // }
-
-    // private static void splitFile(String fileName) {
-    // 	File inputFile = new File(fileName);
-    // 	FileInputStream inputStream;
-    // 	String newFileName;
-    // 	FileOutputStream filePiece;
-    // 	int fileSize = (int) inputFile.length();
-    // 	byte pieceSize = 50;
-    // 	int numPieces = 0, read = 0, readLength = pieceSize;
-    // 	byte[] bytePiecePart;
-
-    // 	try {
-    // 		inputStream = new FileInputStream(inputFile);
-    // 		while (fileSize > 0) {
-    // 			if (fileSize <= pieceSize) {
-    // 				readLength = fileSize;
-    // 			}
-
-    // 			bytePiecePart = new byte[readLength];
-    // 			read = inputStream.read(bytePiecePart, 0, readLength);
-    // 			fileSize -= read;
-
-    // 			assert (read == bytePiecePart.length);
-    // 			numPieces++;
-    // 			newFileName = fileName + ".part" + Integer.toString(numPieces - 1);
-    // 			filePiece = new FileOutputStream(new File(newFileName));
-    // 			filePiece.write(bytePiecePart);
-    // 			filePiece.flush();
-    // 			filePiece.close();
-    // 			bytePiecePart = null;
-    // 			filePiece = null;
-    // 		}
-    // 		inputStream.close();
-    // 	} catch (IOException e) {
-    // 		e.printStackTrace();
-    // 	}
-
-    //     filesAlreadySplit.add(fileName);
-
-    // }
-
-    // private static void mergeFile(String fileName, int numPieces) {
-    // 	File outFile = new File(fileName);
-    // 	FileOutputStream fileOutput;
-    // 	FileInputStream fileInput;
-    // 	byte[] fileBytes;
-    // 	int bytesRead = 0;
-    // 	List<File> list = new ArrayList<File>();
-    // 	for (int i = 0; i < numPieces; i++) {
-    // 		list.add(new File(fileName + ".part" + Integer.toString(i)));
-    // 	}
-
-    // 	try {
-    // 		fileOutput = new FileOutputStream(outFile, true);
-    // 		for (File file : list) {
-    // 			fileInput = new FileInputStream();
-    // 			fileBytes = new byte[(int) file.length()];
-    // 			bytesRead = fileInput.read(fileBytes, 0, (int) file.length());
-    // 			assert(bytesRead == fileBytes.length);
-    // 			assert(bytesRead == (int) file.length());
-    // 			fileOutput.write(fileBytes);
-    // 			fileOutput.flush();
-    // 			fileBytes = null;
-    // 			fileInput.close();
-    // 			fileInput = null;
-    // 		}
-    // 		fileOutput.close();
-    // 		fileOutput = null;
-    // 	} catch (Exception e) {
-    // 		e.printStackTrace();
-    // 	}
-    // }
+    	try {
+    		fileOutput = new FileOutputStream(outFile, true);
+    		for (File file : list) {
+    			fileInput = new FileInputStream(file);
+    			fileBytes = new byte[(int) file.length()];
+    			bytesRead = fileInput.read(fileBytes, 0, (int) file.length());
+    			assert(bytesRead == fileBytes.length);
+    			assert(bytesRead == (int) file.length());
+    			fileOutput.write(fileBytes);
+    			fileOutput.flush();
+    			fileBytes = null;
+    			fileInput.close();
+    			fileInput = null;
+    		}
+    		fileOutput.close();
+    		fileOutput = null;
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
 	
 
 
