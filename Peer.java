@@ -23,6 +23,7 @@ public class Peer implements PeerInterface {
 
 	private ServerSocket serverSocket;
     private static PeerInterface boundPeerStub;
+    private static TrackerInterface leadTrackerStub;
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
     private static List<String> peerList;
@@ -77,6 +78,8 @@ public class Peer implements PeerInterface {
 
     private static void connectToPeer(String peerName, int peerPort) {
         try {
+            if (peerStubs.contains(peerName)) { return; }
+
             Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
             boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
             peerStubs.put(peerName, boundPeerStub);
@@ -87,17 +90,119 @@ public class Peer implements PeerInterface {
         }
     }
 
-    private static void makeRequest(String peerName, String fileName) {
+    /*
+     * Connects to head tracker and asks for peers that have a certain file.
+     * Tracker returns a list of peerInfo strings with "peerName,portNo"
+     * I parse this list, and establish connections to peers with whom I have
+     *     not already established a connection, then ask them what pieces
+     *     they have that I still need.
+     * Based on what 
+     */
+    private static void makeRequest(String trackerID, String fileName) {
         try {
-            byte[] result;
-            System.out.println("Looking for file " + fileName);
-            result = peerStubs.get(peerName).requestFile(fileName);
+            // connect to tracker
+            List<String> peersWithFile = new List<String>();
+            peersWithFile.addall(leadTrackerStub.getPeers(fileName));
 
-            File outFile = new File("result.txt");
-            FileOutputStream fileOutput = new FileOutputStream(outFile, true);
-            fileOutput.write(result);
-            fileOutput.close();
-            System.out.println("Got file");
+
+            int filesize = 0; //bytes
+            if (!peersWithFile.isEmpty()) {
+                filesize = String.parseInt(peersWithFile.get(0));
+                peersWithFile.remove(0);
+            }
+
+            if (peersWithFile.isEmpty()) {
+                return;
+            }
+
+            // returns num totalpieces
+            int numFilePieces = divideFile(fileName);
+
+            List<List<String>> pieceBreakdown = new List<List<String>>();
+            for (int i = 0; i < numFilePieces; i++) {
+                List<String> temp = new List<String>();
+                temp.add("PLACEHOLDER");
+                pieceBreakdown.add(temp);
+            }
+
+            for (String peerInfo : peersWithFile) {
+                int commaIndex = peerInfo.indexOf(",");
+                if (commaIndex == -1) { return; } //error
+
+                String peerName = peerInfo.substring(commaIndex);
+                String portNo = peerInfo.substring(commaIndex+1, substring.length());
+                connectToPeer(peerName, portNo); //establishes connections
+
+                List<int> peerHasMe = new List<int>();
+                peerHasMe.addall(peerStubs.get(peerName).requestPieceInfo(fileName));
+
+                for (int piece : peerHasMe) {
+                    pieceBreakdown.get(piece).add(peerName);
+                }
+            }
+
+            int counter = -1;
+            for (List<String> peersWhoHavePiece : pieceBreakdown) {
+                counter++;
+
+                // always should have the "placeholder" in position 0, so start with 1
+                if (peersWhoHavePiece.elementAtOrDefault(1) == null) {
+                    System.out.println("NO PERSON HAS PIECE FOR FILE "+fileName);
+                    continue;
+                }
+
+                // temp testing just go with the first peer in the list:
+                byte[] answer = askForFilePiece(peersWhoHavePiece.get(1), fileName, counter);
+                writeBytes(answer, counter, fileName);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Exception");
+            e.printStackTrace();
+        }
+        
+    }
+
+    private static void writeBytes(byte[] data, int piece, String filename) {
+        //RANDOM ACCESS FILE STUFF
+
+
+            // ALSO NEED TO FILL IN SORRY - MEGZ
+
+
+
+            // byte[] result;
+            // System.out.println("Looking for file " + fileName);
+            // result = peerStubs.get(peerName).requestFile(fileName);
+
+            // File outFile = new File("result.txt");
+            // FileOutputStream fileOutput = new FileOutputStream(outFile, true);
+            // fileOutput.write(result);
+            // fileOutput.close();
+            // System.out.println("Got file");
+    }
+
+
+    /*
+     * Asks a peer for a specific piece of the file. We have already determined
+     * that this peer has the file, but we will use a timeout and check on the 
+     * peer end to make sure this information is correct.
+     */
+    private static void askForFilePiece(String peerName, String fileName, int piece) {
+        try {
+
+            // I NEED TO FILL IN SORRY -MEGZ
+
+
+            // byte[] result;
+            // System.out.println("Looking for file " + fileName);
+            // result = peerStubs.get(peerName).requestFile(fileName);
+
+            // File outFile = new File("result.txt");
+            // FileOutputStream fileOutput = new FileOutputStream(outFile, true);
+            // fileOutput.write(result);
+            // fileOutput.close();
+            // System.out.println("Got file");
 
         } catch (Exception e) {
             System.out.println("Exception");
