@@ -13,6 +13,9 @@
  * that piece of the file.
  */
 
+
+import java.util.*;
+
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.io.*;
@@ -20,26 +23,27 @@ import java.io.*;
 public class TrackerFile {
 
 	private static String fileName;
-	private static List<Peer> peersWithFile;
+	private static List<String> peersWithFile;
 	private static int fileSize;
 	private static int numPieces;
 
 
-	public Tracker() {
-        super();
+	public TrackerFile(String fileName_, String peerName_, int peerPort_, int fileSize_, int numPieces_) {
+		peersWithFile = new ArrayList<String>();
+		fileName = fileName_;
+		String size = Integer.toString(fileSize_);
+		String temp = peerName_ + ":" + Integer.toString(peerPort_);
+		peersWithFile.add(temp);
+		fileSize = fileSize_;
+		numPieces = numPieces_;
     }
 
-	public int getNumPieces() {
-		return numPieces;
-	}
+	public int getNumPieces() { return numPieces; }
 
-	public int getFileSize() {
-		return fileSize;
-	}
+	public int getFileSize() { return fileSize; }
 
-	public void updateWithUser(String userID) {
-		ids.add(userID);
-	}
+	public List<String> getPeerList() { return peersWithFile; }
+
 
 }
 
