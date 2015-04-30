@@ -22,7 +22,7 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Peer implements PeerInterface {
 
-    private final int PIECE_SIZE = 6400;
+    private static final int PIECE_SIZE = 6400;
 
 	private ServerSocket serverSocket;
     private static PeerInterface boundPeerStub;
@@ -55,6 +55,10 @@ public class Peer implements PeerInterface {
         return null;
     }
 
+    public ArrayList<Integer> requestPieceInfo(String fileName) {
+        return null;
+    }
+
     private String createRandomID() {
         Random rand = new Random();
         int id = rand.nextInt((ID_MAX - ID_MIN) + 1) + ID_MIN;
@@ -81,7 +85,8 @@ public class Peer implements PeerInterface {
 
     private static void connectToPeer(String peerName, int peerPort) {
         try {
-            if (peerStubs.contains(peerName)) { return; }
+            // Fix below statment
+            // if (peerStubs.contains(peerName)) { return; }
 
             Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
             boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
@@ -91,6 +96,11 @@ public class Peer implements PeerInterface {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static int divideFile(int fileSize) {
+
+        return 1;
     }
 
     /*
@@ -104,13 +114,13 @@ public class Peer implements PeerInterface {
     private static void makeRequest(String trackerID, String fileName) {
         try {
             // connect to tracker
-            List<String> peersWithFile = new List<String>();
-            peersWithFile.addall(leadTrackerStub.getPeers(fileName));
+            ArrayList<String> peersWithFile = new ArrayList<String>();
+            peersWithFile.addAll(leadTrackerStub.query(fileName));
 
 
-            int filesize = 0; //bytes
+            int fileSize = 0; //bytes
             if (!peersWithFile.isEmpty()) {
-                filesize = String.parseInt(peersWithFile.get(0));
+                fileSize = Integer.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
             }
 
@@ -119,11 +129,11 @@ public class Peer implements PeerInterface {
             }
 
             // returns num totalpieces
-            int numFilePieces = divideFile(fileName);
+            int numFilePieces = divideFile(fileSize);
 
-            List<List<String>> pieceBreakdown = new List<List<String>>();
+            ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             for (int i = 0; i < numFilePieces; i++) {
-                List<String> temp = new List<String>();
+                ArrayList<String> temp = new ArrayList<String>();
                 temp.add("PLACEHOLDER");
                 pieceBreakdown.add(temp);
             }
@@ -133,25 +143,25 @@ public class Peer implements PeerInterface {
                 if (commaIndex == -1) { return; } //error
 
                 String peerName = peerInfo.substring(commaIndex);
-                String portNo = peerInfo.substring(commaIndex+1, substring.length());
-                connectToPeer(peerName, portNo); //establishes connections
+                String portNo = peerInfo.substring(commaIndex+1, peerInfo.length());
+                connectToPeer(peerName, Integer.parseInt(portNo)); //establishes connections
 
-                List<int> peerHasMe = new List<int>();
-                peerHasMe.addall(peerStubs.get(peerName).requestPieceInfo(fileName));
+                ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
+                peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
 
-                for (int piece : peerHasMe) {
-                    pieceBreakdown.get(piece).add(peerName);
+                for (Integer piece : peerHasMe) {
+                    pieceBreakdown.get((int)piece).add(peerName);
                 }
             }
 
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
 
             int counter = -1;
-            for (List<String> peersWhoHavePiece : pieceBreakdown) {
+            for (ArrayList<String> peersWhoHavePiece : pieceBreakdown) {
                 counter++;
 
                 // always should have the "placeholder" in position 0, so start with 1
-                if (peersWhoHavePiece.elementAtOrDefault(1) == null) {
+                if (peersWhoHavePiece.size() <= 1) {
                     System.out.println("NO PERSON HAS PIECE FOR FILE "+fileName);
                     continue;
                 }
@@ -171,11 +181,15 @@ public class Peer implements PeerInterface {
     }
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
-        
-        // first get offset with piece:
-        int offset = piece * PIECE_SIZE;
-        fileName.seek(offset);
-        fileName.write(data);
+        try {
+            // first get offset with piece:
+            int offset = piece * PIECE_SIZE;
+            fileName.seek(offset);
+            fileName.write(data);
+        } catch (Exception e) {
+            System.out.println("Exception");
+            e.printStackTrace();
+        }
     }
 
 
@@ -184,7 +198,7 @@ public class Peer implements PeerInterface {
      * that this peer has the file, but we will use a timeout and check on the 
      * peer end to make sure this information is correct.
      */
-    private static void askForFilePiece(String peerName, String fileName, int piece) {
+    private static byte[] askForFilePiece(String peerName, String fileName, int piece) {
         try {
 
             // I NEED TO FILL IN SORRY -MEGZ
@@ -204,7 +218,7 @@ public class Peer implements PeerInterface {
             System.out.println("Exception");
             e.printStackTrace();
         }
-        
+        return null;
     }
 
     /* to run: 
