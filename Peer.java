@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.io.*;
 
 import java.util.Scanner;
@@ -20,6 +21,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Peer implements PeerInterface {
+
+    private final int PIECE_SIZE = 6400;
 
 	private ServerSocket serverSocket;
     private static PeerInterface boundPeerStub;
@@ -141,6 +144,8 @@ public class Peer implements PeerInterface {
                 }
             }
 
+            RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
+
             int counter = -1;
             for (List<String> peersWhoHavePiece : pieceBreakdown) {
                 counter++;
@@ -153,8 +158,10 @@ public class Peer implements PeerInterface {
 
                 // temp testing just go with the first peer in the list:
                 byte[] answer = askForFilePiece(peersWhoHavePiece.get(1), fileName, counter);
-                writeBytes(answer, counter, fileName);
+                writeBytes(answer, outFile, counter);
             }
+
+            outFile.close();
 
         } catch (Exception e) {
             System.out.println("Exception");
@@ -163,23 +170,12 @@ public class Peer implements PeerInterface {
         
     }
 
-    private static void writeBytes(byte[] data, int piece, String filename) {
-        //RANDOM ACCESS FILE STUFF
-
-
-            // ALSO NEED TO FILL IN SORRY - MEGZ
-
-
-
-            // byte[] result;
-            // System.out.println("Looking for file " + fileName);
-            // result = peerStubs.get(peerName).requestFile(fileName);
-
-            // File outFile = new File("result.txt");
-            // FileOutputStream fileOutput = new FileOutputStream(outFile, true);
-            // fileOutput.write(result);
-            // fileOutput.close();
-            // System.out.println("Got file");
+    private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
+        
+        // first get offset with piece:
+        int offset = piece * PIECE_SIZE;
+        fileName.seek(offset);
+        fileName.write(data);
     }
 
 
