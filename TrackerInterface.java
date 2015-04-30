@@ -1,7 +1,8 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.*;
 
-public interface PeerInterface extends Remote {
-        public String query(String fileName) throws RemoteException;
-        public void informOfNewUpload(String fileName) throws RemoteException;
+public interface TrackerInterface extends Remote {
+        public List<String> query(String fileName) throws RemoteException;
+        public void seedFile(String fileName, String peerName, int peerPort, int fileSize, int numPieces) throws RemoteException;
 }
