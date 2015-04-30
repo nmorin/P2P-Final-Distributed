@@ -21,20 +21,14 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Peer implements PeerInterface {
 
-	private ServerSocket serverSocket;
     private static PeerInterface boundPeerStub;
     private static TrackerInterface leadTrackerStub;
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
-    private static List<String> peerList;
     private static Map<String, PeerInterface> peerStubs;
-    private List<String> filesAlreadySplit;
-
 
 	public Peer() {
         super();
-
-        peerList = new ArrayList<String>(); 
         peerStubs = new HashMap<String, PeerInterface>();
 	}
 
@@ -104,14 +98,12 @@ public class Peer implements PeerInterface {
             List<String> peersWithFile = new List<String>();
             peersWithFile.addall(leadTrackerStub.getPeers(fileName));
 
-
             int filesize = 0; //bytes
-            if (!peersWithFile.isEmpty()) {
+            if (peersWithFile) {
                 filesize = String.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
-            }
-
-            if (peersWithFile.isEmpty()) {
+            } else {
+                System.out.println("File not found");
                 return;
             }
 
@@ -259,77 +251,6 @@ public class Peer implements PeerInterface {
         
     }
 
-    private void splitFile(String fileName) {
-    	File inputFile = new File(fileName);
-    	FileInputStream inputStream;
-    	String newFileName;
-    	FileOutputStream filePiece;
-    	int fileSize = (int) inputFile.length();
-    	byte pieceSize = 50;
-    	int numPieces = 0, read = 0, readLength = pieceSize;
-    	byte[] bytePiecePart;
-
-    	try {
-    		inputStream = new FileInputStream(inputFile);
-    		while (fileSize > 0) {
-    			if (fileSize <= pieceSize) {
-    				readLength = fileSize;
-    			}
-
-    			bytePiecePart = new byte[readLength];
-    			read = inputStream.read(bytePiecePart, 0, readLength);
-    			fileSize -= read;
-
-    			assert (read == bytePiecePart.length);
-    			numPieces++;
-    			newFileName = fileName + ".part" + Integer.toString(numPieces - 1);
-    			filePiece = new FileOutputStream(new File(newFileName));
-    			filePiece.write(bytePiecePart);
-    			filePiece.flush();
-    			filePiece.close();
-    			bytePiecePart = null;
-    			filePiece = null;
-    		}
-    		inputStream.close();
-    	} catch (IOException e) {
-    		e.printStackTrace();
-    	}
-
-        filesAlreadySplit.add(fileName);
-
-    }
-
-    private void mergeFile(String fileName, int numPieces) {
-    	File outFile = new File(fileName);
-    	FileOutputStream fileOutput;
-    	FileInputStream fileInput;
-    	byte[] fileBytes;
-    	int bytesRead = 0;
-    	List<File> list = new ArrayList<File>();
-    	for (int i = 0; i < numPieces; i++) {
-    		list.add(new File(fileName + ".part" + Integer.toString(i)));
-    	}
-
-    	try {
-    		fileOutput = new FileOutputStream(outFile, true);
-    		for (File file : list) {
-    			fileInput = new FileInputStream(file);
-    			fileBytes = new byte[(int) file.length()];
-    			bytesRead = fileInput.read(fileBytes, 0, (int) file.length());
-    			assert(bytesRead == fileBytes.length);
-    			assert(bytesRead == (int) file.length());
-    			fileOutput.write(fileBytes);
-    			fileOutput.flush();
-    			fileBytes = null;
-    			fileInput.close();
-    			fileInput = null;
-    		}
-    		fileOutput.close();
-    		fileOutput = null;
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	}
-    }
 	
 
 
