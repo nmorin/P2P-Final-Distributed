@@ -10,7 +10,7 @@ import java.io.*;
 import java.util.Scanner;
 import java.util.Random;
 import java.util.*;
-import java.util.ArrayList;
+import java.util.ArrayList.*;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,16 +22,19 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Peer implements PeerInterface {
 
-    private static final int PIECE_SIZE = 6400;
-    private static PeerInterface boundPeerStub;
-    private static TrackerInterface leadTrackerStub;
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
+    private static final int PIECE_SIZE = 6400;
+
+    private static TrackerInterface leadTrackerStub;
     private static Map<String, PeerInterface> peerStubs;
+
+    private Map<String, PeerFile> myFiles;
 
 	public Peer() {
         super();
         peerStubs = new HashMap<String, PeerInterface>();
+        myFiles = new HashMap<String, PeerFile>();
 	}
 
     public byte[] requestFile(String fileName) {
@@ -48,8 +51,9 @@ public class Peer implements PeerInterface {
         return null;
     }
 
+    /* Returns a list of the pieces this peer has of the specified file */
     public ArrayList<Integer> requestPieceInfo(String fileName) {
-        return null;
+        return myFiles.get(fileName).getCompletePieces();
     }
 
     private String createRandomID() {
@@ -82,7 +86,7 @@ public class Peer implements PeerInterface {
             // if (peerStubs.contains(peerName)) { return; }
 
             Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
-            boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
+            PeerInterface boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
             peerStubs.put(peerName, boundPeerStub);
             System.out.println("Found peer " + peerName);
 
@@ -91,9 +95,10 @@ public class Peer implements PeerInterface {
         }
     }
 
-    private static int divideFile(int fileSize) {
-
-        return 1;
+    private static int getNumPieces(int fileSize) {
+        int size = fileSize / PIECE_SIZE;
+        if ((double)fileSize / (double)PIECE_SIZE != 0) { size++; }
+        return size;
     }
 
     /*
@@ -110,9 +115,9 @@ public class Peer implements PeerInterface {
             ArrayList<String> peersWithFile = new ArrayList<String>();
             peersWithFile.addAll(leadTrackerStub.query(fileName));
 
-            int filesize = 0; //bytes
-            if (peersWithFile) {
-                filesize = String.parseInt(peersWithFile.get(0));
+            int fileSize = 0; //bytes
+            if (peersWithFile != null) {
+                fileSize = Integer.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
             } else {
                 System.out.println("File not found");
@@ -120,7 +125,7 @@ public class Peer implements PeerInterface {
             }
 
             // returns num totalpieces
-            int numFilePieces = divideFile(fileSize);
+            int numFilePieces = getNumPieces(fileSize);
 
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             for (int i = 0; i < numFilePieces; i++) {

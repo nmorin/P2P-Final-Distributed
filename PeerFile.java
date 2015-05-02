@@ -3,16 +3,16 @@ import java.util.*;
 public class PeerFile {
 
 	private static String fileName;
-	private static List<String> peersWithFile;
+	private static ArrayList<String> peersWithFile;
 	private static int numPieces;
-	private static List<int> completePieces;
-	private static List<int> neededPieces;
+	private static ArrayList<Integer> completePieces;
+	private static ArrayList<Integer> neededPieces;
 
-	public PeerFile(String fileName, int numPieces, List<String> peersWithFile) {
+	public PeerFile(String fileName, int numPieces, ArrayList<String> peersWithFile) {
 		this.fileName = fileName;
 		this.numPieces = numPieces;
 		this.peersWithFile = new ArrayList<String>();
-		this.peersWithFile.addall(peersWithFile);
+		this.peersWithFile.addAll(peersWithFile);
 		this.completePieces = new ArrayList<Integer>();
 		this.neededPieces = new ArrayList<Integer>();
 		for (int i = 0; i < numPieces; i++) {
@@ -20,11 +20,11 @@ public class PeerFile {
 		}
 	}
 
-	public List<Integer> getPiecesNeeded() { return neededPieces; }
+	public ArrayList<Integer> getPiecesNeeded() { return neededPieces; }
 
-	public List<Integer> getCompletePieces() { return completePieces; }
+	public ArrayList<Integer> getCompletePieces() { return completePieces; }
 
-	public List<String> getPeerList() { return peersWithFile; }
+	public ArrayList<String> getPeerList() { return peersWithFile; }
 
 
 }
