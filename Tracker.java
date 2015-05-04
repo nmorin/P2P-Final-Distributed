@@ -15,12 +15,12 @@ public class Tracker implements TrackerInterface {
 
 	}
 
-	public List<String> query(String fileName) {
+	public List<String> query(String fileName, String name, int portNum) {
 		List<String> response = new ArrayList<String>();
 		if (trackerFiles.containsKey(fileName)) {
 			TrackerFile temp = trackerFiles.get(fileName);
 			response = temp.getPeerList();
-
+			temp.addPeer(name, portNum);
 		} else {
 			response = null;
 		}

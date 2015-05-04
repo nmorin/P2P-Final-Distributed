@@ -22,9 +22,15 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Peer implements PeerInterface {
 
+    private static String myName;
+    private static int myPortNum;
+
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
     private static final int PIECE_SIZE = 6400;
+    private static final String TRACKER_IP = "trackerIP";
+    private static final String TRACKER_NAME = "trackerName";
+    private static final int TRACKER_PORT = 8888;
 
     private static TrackerInterface leadTrackerStub;
     private static Map<String, PeerInterface> peerStubs;
@@ -63,7 +69,9 @@ public class Peer implements PeerInterface {
         return idString;
     }
 
-    private static void createAndBindSelf(int myPortNum, String myName) {
+    /* Creates and binds an instance of the peer's registry so it can
+    be accessed by others and make connections */
+    private static void createAndBindSelf() {
          try {
             // Commented out names to perform hardcoded testing
             // String name = createRandomID();
@@ -82,8 +90,9 @@ public class Peer implements PeerInterface {
 
     private static void connectToPeer(String peerName, int peerPort) {
         try {
-            // Fix below statment
-            // if (peerStubs.contains(peerName)) { return; }
+            // Checks if peer is already bound or not
+            PeerInterface temp = peerStubs.get(peerName);
+            if (temp != null) { return; }
 
             Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
             PeerInterface boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
@@ -101,6 +110,18 @@ public class Peer implements PeerInterface {
         return size;
     }
 
+    private static void connectToTracker() {
+        try {
+            Registry trackerReg = LocateRegistry.getRegistry(TRACKER_IP, TRACKER_PORT);
+            leadTrackerStub = (TrackerInterface) trackerReg.lookup(TRACKER_NAME);
+            System.out.println("Found tracker!");
+        } catch (Exception e) {
+            System.out.println("Exception occurred connecting to tracker");
+            e.printStackTrace();
+        }
+        
+    }
+
     /*
      * Connects to head tracker and asks for peers that have a certain file.
      * Tracker returns a list of peerInfo strings with "peerName,portNo"
@@ -111,9 +132,10 @@ public class Peer implements PeerInterface {
      */
     private static void makeRequest(String trackerID, String fileName) {
         try {
-            // connect to tracker
+            connectToTracker();
+
             ArrayList<String> peersWithFile = new ArrayList<String>();
-            peersWithFile.addAll(leadTrackerStub.query(fileName));
+            peersWithFile.addAll(leadTrackerStub.query(fileName, myName, myPortNum));
 
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
@@ -170,7 +192,7 @@ public class Peer implements PeerInterface {
             outFile.close();
 
         } catch (Exception e) {
-            System.out.println("Exception");
+            System.out.println("Exception in placing request");
             e.printStackTrace();
         }
         
@@ -183,7 +205,7 @@ public class Peer implements PeerInterface {
             fileName.seek(offset);
             fileName.write(data);
         } catch (Exception e) {
-            System.out.println("Exception");
+            System.out.println("Exception in writing file");
             e.printStackTrace();
         }
     }
@@ -226,14 +248,14 @@ public class Peer implements PeerInterface {
     */
 	public static void main(String[] argv) {
         String host = (argv.length < 1) ? "localhost" : argv[0];
-        int myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
-        String myName = (argv.length < 3) ? "Howard" : (argv[2]);
+        myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
+        myName = (argv.length < 3) ? "Howard" : (argv[2]);
 
         String fileName = "YOLO.txt";
 
         System.out.println("My portnum: " + myPortNum + "\n My name: " + myName + "\n");
 
-        createAndBindSelf(myPortNum, myName);
+        createAndBindSelf();
 
         Scanner keyboard = new Scanner(System.in);
         /* Infinite loop that will query the user to input commands. To

@@ -6,6 +6,7 @@ public class PeerFile {
 	private static ArrayList<String> peersWithFile;
 	private static int numPieces;
 	private static ArrayList<Integer> completePieces;
+	private static ArrayList<Integer> downloadingPieces;
 	private static ArrayList<Integer> neededPieces;
 
 	public PeerFile(String fileName, int numPieces, ArrayList<String> peersWithFile) {

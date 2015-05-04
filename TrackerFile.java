@@ -40,6 +40,11 @@ public class TrackerFile {
 
 	public List<String> getPeerList() { return peersWithFile; }
 
+	public void addPeer(String name, int portNum) { 
+		String temp = name + ":" + Integer.toString(portNum);
+		peersWithFile.add(temp);
+	}
+
 
 }
 
