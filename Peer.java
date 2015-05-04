@@ -28,9 +28,11 @@ public class Peer implements PeerInterface {
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
     private static final int PIECE_SIZE = 6400;
-    private static final String TRACKER_IP = "trackerIP";
-    private static final String TRACKER_NAME = "trackerName";
-    private static final int TRACKER_PORT = 8888;
+
+    private static boolean alreadyConnectedToTracker = false;
+    private static final String TRACKER_IP = "localhost";
+    private static final String TRACKER_NAME = "Tracker";
+    private static final int TRACKER_PORT = 6666;
 
     private static TrackerInterface leadTrackerStub;
     private static Map<String, PeerInterface> peerStubs;
@@ -104,6 +106,8 @@ public class Peer implements PeerInterface {
         }
     }
 
+    /* Given a file size, returns the number of pieces of the constant
+    piece size are in the file */
     private static int getNumPieces(int fileSize) {
         int size = fileSize / PIECE_SIZE;
         if ((double)fileSize / (double)PIECE_SIZE != 0) { size++; }
@@ -111,15 +115,34 @@ public class Peer implements PeerInterface {
     }
 
     private static void connectToTracker() {
+        if (alreadyConnectedToTracker) { return; }
         try {
             Registry trackerReg = LocateRegistry.getRegistry(TRACKER_IP, TRACKER_PORT);
             leadTrackerStub = (TrackerInterface) trackerReg.lookup(TRACKER_NAME);
             System.out.println("Found tracker!");
+            alreadyConnectedToTracker = true;
         } catch (Exception e) {
             System.out.println("Exception occurred connecting to tracker");
             e.printStackTrace();
         }
-        
+    }
+
+    /* Method to seed a file on the network */
+    private static void seedFile(String fileName) {
+        connectToTracker();
+        File file = new File(fileName);
+        if (!file.exists()) { 
+            System.out.println("Error, file does not exist");
+            return; 
+        }
+        int lengthInBytes = (int) file.length();
+        int numPieces = getNumPieces(lengthInBytes);
+        try {
+            leadTrackerStub.seedFile(fileName, myName, myPortNum, lengthInBytes, numPieces);
+        } catch (Exception e) {
+            System.out.println("Exception in seeding file");
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -239,27 +262,12 @@ public class Peer implements PeerInterface {
         return null;
     }
 
-    /* to run: 
-    java Peer localhost <your name> <your port>
-    to connect to more peers: first start them on their ports, then enter command:
-    connect <their name> <their port>
-    to request file, enter command:
-    request <their name>
-    */
-	public static void main(String[] argv) {
-        String host = (argv.length < 1) ? "localhost" : argv[0];
-        myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
-        myName = (argv.length < 3) ? "Howard" : (argv[2]);
-
-        String fileName = "YOLO.txt";
-
-        System.out.println("My portnum: " + myPortNum + "\n My name: " + myName + "\n");
-
-        createAndBindSelf();
-
+    /* Infinite loop that will query the user to input commands. To
+    exit, type 'exit'. */
+    private static void parseInput() {
         Scanner keyboard = new Scanner(System.in);
-        /* Infinite loop that will query the user to input commands. To
-        exit, type 'exit'. */
+        String fileName = "YOLO.txt";
+        
         while (true) {
             System.out.println("Enter a command");
             String command = keyboard.nextLine();
@@ -273,6 +281,12 @@ public class Peer implements PeerInterface {
                 connectToPeer(name, port);
             }
 
+            // Seed a file
+            if (parsedRequest[0].equals("seed")) {
+                String name = parsedRequest[1];
+                seedFile(name);
+            }
+
             // Request a file
             else if (parsedRequest[0].equals("request")) {
                 String peerName = parsedRequest[1];
@@ -284,10 +298,26 @@ public class Peer implements PeerInterface {
                 break;
             }
         }
-        
     }
 
-	
+
+    /* to run: 
+    java Peer localhost <your name> <your port>
+    to connect to more peers: first start them on their ports, then enter command:
+    connect <their name> <their port>
+    to request file, enter command:
+    request <their name>
+    */
+	public static void main(String[] argv) {
+        String host = (argv.length < 1) ? "localhost" : argv[0];
+        myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
+        myName = (argv.length < 3) ? "Howard" : (argv[2]);
+
+        System.out.println("My portnum: " + myPortNum + "\n My name: " + myName + "\n");
+
+        createAndBindSelf();
+        parseInput();
+    }
 
 
 }
