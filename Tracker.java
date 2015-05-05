@@ -15,8 +15,8 @@ public class Tracker implements TrackerInterface {
 
 	}
 
-	public List<String> query(String fileName, String name, int portNum) {
-		List<String> response = new ArrayList<String>();
+	public ArrayList<String> query(String fileName, String name, int portNum) {
+		ArrayList<String> response = new ArrayList<String>();
 		if (trackerFiles.containsKey(fileName)) {
 			TrackerFile temp = trackerFiles.get(fileName);
 			response = temp.getPeerList();
@@ -28,8 +28,13 @@ public class Tracker implements TrackerInterface {
 	}
 
 	public void seedFile(String fileName, String peerName, int peerPort, int fileSize, int numPieces) {
+		if (trackerFiles.containsKey(fileName)) { 
+			System.out.println("A file by that name is already in tracker's database");
+			return; 
+		}
 		TrackerFile temp = new TrackerFile(fileName, peerName, peerPort, fileSize, numPieces);
 		trackerFiles.put(fileName, temp);
+		System.out.println("Added file " + fileName + " from peer " + peerName);
 	}
 
 	private static void createAndBindSelf(int myPortNum, String myName) {

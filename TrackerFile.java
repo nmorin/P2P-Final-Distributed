@@ -19,7 +19,7 @@ import java.util.*;
 public class TrackerFile {
 
 	private static String fileName;
-	private static List<String> peersWithFile;
+	private static ArrayList<String> peersWithFile;
 	private static int fileSize;
 	private static int numPieces;
 
@@ -38,7 +38,7 @@ public class TrackerFile {
 
 	public int getFileSize() { return fileSize; }
 
-	public List<String> getPeerList() { return peersWithFile; }
+	public ArrayList<String> getPeerList() { return peersWithFile; }
 
 	public void addPeer(String name, int portNum) { 
 		String temp = name + ":" + Integer.toString(portNum);

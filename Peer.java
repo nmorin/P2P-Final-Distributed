@@ -45,7 +45,7 @@ public class Peer implements PeerInterface {
         myFiles = new HashMap<String, PeerFile>();
 	}
 
-    public byte[] requestFile(String fileName) {
+    public byte[] requestFile(String fileName, int piece) {
         try {
             int bytesRead;
             FileInputStream fileInput = new FileInputStream(fileName);
@@ -139,6 +139,7 @@ public class Peer implements PeerInterface {
         int numPieces = getNumPieces(lengthInBytes);
         try {
             leadTrackerStub.seedFile(fileName, myName, myPortNum, lengthInBytes, numPieces);
+            System.out.println("Seeding complete");
         } catch (Exception e) {
             System.out.println("Exception in seeding file");
             e.printStackTrace();
@@ -157,8 +158,7 @@ public class Peer implements PeerInterface {
         try {
             connectToTracker();
 
-            ArrayList<String> peersWithFile = new ArrayList<String>();
-            peersWithFile.addAll(leadTrackerStub.query(fileName, myName, myPortNum));
+            ArrayList<String> peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum);
 
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
@@ -302,11 +302,14 @@ public class Peer implements PeerInterface {
 
 
     /* to run: 
-    java Peer localhost <your name> <your port>
+    java Peer localhost <your port> <your name> 
     to connect to more peers: first start them on their ports, then enter command:
     connect <their name> <their port>
-    to request file, enter command:
+    to request a file directly, enter command:
     request <their name>
+    to seed a file, enter command: 
+    seed <file name>
+
     */
 	public static void main(String[] argv) {
         String host = (argv.length < 1) ? "localhost" : argv[0];
