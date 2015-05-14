@@ -185,12 +185,11 @@ public class Peer implements PeerInterface {
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             for (int i = 0; i < numFilePieces; i++) {
                 ArrayList<String> temp = new ArrayList<String>();
-                temp.add("PLACEHOLDER");
                 pieceBreakdown.add(temp);
             }
 
             for (String peerInfo : peersWithFile) {
-                int colonIndex = peerInfo.indexOf(";");
+                int colonIndex = peerInfo.indexOf(":");
                 if (colonIndex == -1) { return; } //error
 
                 String peerName = peerInfo.substring(colonIndex);
