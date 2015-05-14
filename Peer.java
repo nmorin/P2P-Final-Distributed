@@ -83,7 +83,7 @@ public class Peer implements PeerInterface {
 
     /* Creates and binds an instance of the peer's registry so it can
     be accessed by others and make connections */
-    private void createAndBindSelf() {
+    private static void createAndBindSelf() {
          try {
             // Commented out names to perform hardcoded testing
             // String name = createRandomID();
@@ -100,7 +100,7 @@ public class Peer implements PeerInterface {
 
     }
 
-    private void connectToPeer(String peerName, int peerPort) {
+    private static void connectToPeer(String peerName, int peerPort) {
         try {
             // Checks if peer is already bound or not
             PeerInterface temp = peerStubs.get(peerName);
@@ -118,13 +118,13 @@ public class Peer implements PeerInterface {
 
     /* Given a file size, returns the number of pieces of the constant
     piece size are in the file */
-    private int getNumPieces(int fileSize) {
+    private static int getNumPieces(int fileSize) {
         int size = fileSize / PIECE_SIZE;
         if ((double)fileSize / (double)PIECE_SIZE != 0) { size++; }
         return size;
     }
 
-    private void connectToTracker() {
+    private static void connectToTracker() {
         if (alreadyConnectedToTracker) { return; }
         try {
             Registry trackerReg = LocateRegistry.getRegistry(TRACKER_IP, TRACKER_PORT);
@@ -138,7 +138,7 @@ public class Peer implements PeerInterface {
     }
 
     /* Method to seed a file on the network */
-    private void seedFile(String fileName) {
+    private static void seedFile(String fileName) {
         connectToTracker();
         File file = new File(fileName);
         if (!file.exists()) { 
@@ -164,7 +164,7 @@ public class Peer implements PeerInterface {
      *     they have that I still need.
      * Based on what 
      */
-    private void makeRequest(String trackerID, String fileName) {
+    private static void makeRequest(String fileName) {
         try {
             connectToTracker();
 
@@ -230,7 +230,7 @@ public class Peer implements PeerInterface {
         
     }
 
-    private void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
+    private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
         try {
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
@@ -247,7 +247,7 @@ public class Peer implements PeerInterface {
      * that this peer has the file, but we will use a timeout and check on the 
      * peer end to make sure this information is correct.
      */
-    private byte[] askForFilePiece(String peerName, String fileName, int piece) {
+    private static byte[] askForFilePiece(String peerName, String fileName, int piece) {
         try {
             byte[] answer = peerStubs.get(peerName).requestFile(fileName, piece);
             return answer;
@@ -260,7 +260,7 @@ public class Peer implements PeerInterface {
 
     /* Infinite loop that will query the user to input commands. To
     exit, type 'exit'. */
-    private void parseInput() {
+    private static void parseInput() {
         Scanner keyboard = new Scanner(System.in);
         String fileName = "YOLO.txt";
         
@@ -278,15 +278,14 @@ public class Peer implements PeerInterface {
             }
 
             // Seed a file
-            if (parsedRequest[0].equals("seed")) {
+            else if (parsedRequest[0].equals("seed")) {
                 String name = parsedRequest[1];
                 seedFile(name);
             }
 
-            // Request a file
+            // Request a file frm peer directly
             else if (parsedRequest[0].equals("request")) {
-                String peerName = parsedRequest[1];
-                makeRequest(peerName, fileName);
+                makeRequest(fileName);
             }
 
             else if (parsedRequest[0].equals("exit")) {
@@ -307,7 +306,7 @@ public class Peer implements PeerInterface {
     seed <file name>
 
     */
-	public void main(String[] argv) {
+	public static void main(String[] argv) {
         String host = (argv.length < 1) ? "localhost" : argv[0];
         myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
         myName = (argv.length < 3) ? "Howard" : (argv[2]);
