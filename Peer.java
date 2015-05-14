@@ -47,12 +47,18 @@ public class Peer implements PeerInterface {
 
     public byte[] requestFile(String fileName, int piece) {
         try {
-            int bytesRead;
-            FileInputStream fileInput = new FileInputStream(fileName);
-            byte[] fileBytes = new byte[(int)(new File(fileName).length())];
-            bytesRead = fileInput.read(fileBytes);
-            assert(bytesRead == fileBytes.length);
-            return fileBytes;
+            // int bytesRead;
+            // FileInputStream fileInput = new FileInputStream(fileName);
+            // byte[] fileBytes = new byte[(int)(new File(fileName).length())];
+            // bytesRead = fileInput.read(fileBytes);
+            // assert(bytesRead == fileBytes.length);
+            // return fileBytes;
+            int fileBytes = new byte[PIECE_SIZE];
+            RandomAccessFile file = new RandomAccessFile(fileName, "r");
+            long offset = (long) piece * PIECE_SIZE;
+            file.seek(offset);
+            file.read
+
         } catch (Exception e) {
             e.printStackTrace();
         }
