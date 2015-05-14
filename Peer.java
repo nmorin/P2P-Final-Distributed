@@ -53,11 +53,14 @@ public class Peer implements PeerInterface {
             // bytesRead = fileInput.read(fileBytes);
             // assert(bytesRead == fileBytes.length);
             // return fileBytes;
-            int fileBytes = new byte[PIECE_SIZE];
+
+            byte[] fileBytes = new byte[PIECE_SIZE];
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
             long offset = (long) piece * PIECE_SIZE;
             file.seek(offset);
-            file.read
+            file.readFully(fileBytes);
+            file.close();
+            return fileBytes;
 
         } catch (Exception e) {
             e.printStackTrace();
