@@ -36,6 +36,14 @@ public class TrackerFile {
 
 	public int getNumPieces() { return numPieces; }
 
+	public String peerListToString() {
+		String listString = "";
+		for (String s : peersWithFile) {
+			    listString += s + "\t";
+		}
+		return listString;
+	}
+
 	public int getFileSize() { return fileSize; }
 
 	public ArrayList<String> getPeerList() { return peersWithFile; }

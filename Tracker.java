@@ -21,7 +21,9 @@ public class Tracker implements TrackerInterface {
 			TrackerFile temp = trackerFiles.get(fileName);
 			response = temp.getPeerList();
 			temp.addPeer(name, portNum);
+			System.out.println("Yes, I have file " + fileName);
 		} else {
+			System.out.println("Tracker found no record of " + fileName);
 			response = null;
 		}
 		return response;
@@ -35,6 +37,7 @@ public class Tracker implements TrackerInterface {
 		TrackerFile temp = new TrackerFile(fileName, peerName, peerPort, fileSize, numPieces);
 		trackerFiles.put(fileName, temp);
 		System.out.println("Added file " + fileName + " from peer " + peerName);
+		System.out.println("Peer list of " + fileName + ": " + temp.peerListToString());
 	}
 
 	private static void createAndBindSelf(int myPortNum, String myName) {

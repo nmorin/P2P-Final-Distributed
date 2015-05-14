@@ -285,6 +285,7 @@ public class Peer implements PeerInterface {
 
             // Request a file frm peer directly
             else if (parsedRequest[0].equals("request")) {
+                fileName = parsedRequest[1];
                 makeRequest(fileName);
             }
 
