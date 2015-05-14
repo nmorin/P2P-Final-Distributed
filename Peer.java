@@ -190,11 +190,11 @@ public class Peer implements PeerInterface {
             }
 
             for (String peerInfo : peersWithFile) {
-                int commaIndex = peerInfo.indexOf(",");
-                if (commaIndex == -1) { return; } //error
+                int colonIndex = peerInfo.indexOf(";");
+                if (colonIndex == -1) { return; } //error
 
-                String peerName = peerInfo.substring(commaIndex);
-                String portNo = peerInfo.substring(commaIndex+1, peerInfo.length());
+                String peerName = peerInfo.substring(colonIndex);
+                String portNo = peerInfo.substring(colonIndex+1, peerInfo.length());
                 connectToPeer(peerName, Integer.parseInt(portNo)); //establishes connections
 
                 ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
@@ -243,9 +243,6 @@ public class Peer implements PeerInterface {
         }
     }
 
-
-    // private 
-
     /*
      * Asks a peer for a specific piece of the file. We have already determined
      * that this peer has the file, but we will use a timeout and check on the 
@@ -253,20 +250,8 @@ public class Peer implements PeerInterface {
      */
     private byte[] askForFilePiece(String peerName, String fileName, int piece) {
         try {
-
-            // I NEED TO FILL IN SORRY -MEGZ
-
-
-            // byte[] result;
-            // System.out.println("Looking for file " + fileName);
-            // result = peerStubs.get(peerName).requestFile(fileName);
-
-            // File outFile = new File("result.txt");
-            // FileOutputStream fileOutput = new FileOutputStream(outFile, true);
-            // fileOutput.write(result);
-            // fileOutput.close();
-            // System.out.println("Got file");
-
+            byte[] answer = peerStubs.get(peerName).requestFile(fileName, piece);
+            return answer;
         } catch (Exception e) {
             System.out.println("Exception");
             e.printStackTrace();
