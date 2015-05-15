@@ -27,7 +27,7 @@ public class Peer implements PeerInterface {
 
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
-    private static final int PIECE_SIZE = 6400;
+    private static final int PIECE_SIZE = 60;
 
     private static boolean alreadyConnectedToTracker = false;
     private static final String TRACKER_IP = "localhost";
@@ -58,15 +58,32 @@ public class Peer implements PeerInterface {
             // assert(bytesRead == fileBytes.length);
             // return fileBytes;
 
-            byte[] fileBytes = new byte[PIECE_SIZE];
+            byte[] fileBytes;// = new byte[PIECE_SIZE];
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
+            int size = (int) file.length();
+            int numPieces = getNumPieces(size);
+
             int offset = piece * PIECE_SIZE;
-            System.out.println("About to read fully for offset " + offset);
-            file.read(fileBytes, offset, PIECE_SIZE);
-            print("read fully");
+            int amountToRead;
+            if (offset + PIECE_SIZE > size) {
+                amountToRead = size - offset;
+                fileBytes = new byte[amountToRead];
+            } else { 
+                amountToRead = PIECE_SIZE;
+                fileBytes = new byte[PIECE_SIZE];
+            }
+            print("Length: " + size + " Piece size:" + PIECE_SIZE);
+            print("Numpieces: " + numPieces + " Offset: " + offset);
+            print("amountToRead: " + amountToRead);
+
+            // file.read(fileBytes, offset, amountToRead);
+            file.seek((long) offset);
+            file.read(fileBytes);
+
+            String s = new String(fileBytes);
+            print("File bytes: " + s);
 
             file.close();
-            System.out.println("filebytes: " + fileBytes);
             return fileBytes;
 
         } catch (Exception e) {
@@ -259,8 +276,9 @@ public class Peer implements PeerInterface {
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
         try {
-            System.out.println("writing my bytes man");
-            System.out.println(data);
+            System.out.println("Wryting bytes");
+            String s = new String(data);
+            System.out.println(s);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
             fileName.seek(offset);
@@ -277,7 +295,7 @@ public class Peer implements PeerInterface {
      * peer end to make sure this information is correct.
      */
     private static byte[] askForFilePiece(String peerName, String fileName, int piece) {
-        print("I, " + myName + " am requesting " + fileName + " frm " + peerName + "\n\n");
+        print("I, " + myName + " am requesting " + fileName + " frm " + peerName + "\n");
         try {
             byte[] answer = peerStubs.get(peerName).requestFile(fileName, piece);
             return answer;
