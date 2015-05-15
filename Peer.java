@@ -236,12 +236,12 @@ public class Peer implements PeerInterface {
                 counter++;
 
                 // always should have the "placeholder" in position 0, so start with 1
-                if (peersWhoHavePiece.size() <= 1) {
+                if (peersWhoHavePiece.size() < 1) {
                     System.out.println("NO PERSON HAS PIECE FOR FILE "+fileName);
                     continue;
                 }
 
-                print("REUEST");
+                print("REQUEST");
 
                 // temp testing just go with the first peer in the list:
                 byte[] answer = askForFilePiece(peersWhoHavePiece.get(0), fileName, counter);
