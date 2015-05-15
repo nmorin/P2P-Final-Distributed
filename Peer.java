@@ -27,7 +27,7 @@ public class Peer implements PeerInterface {
 
     private final int ID_MAX = 999999999;
     private final int ID_MIN = 100000000;
-    private static final int PIECE_SIZE = 6400;
+    private static final int PIECE_SIZE = 60;
 
     private static boolean alreadyConnectedToTracker = false;
     private static final String TRACKER_IP = "localhost";
@@ -61,8 +61,12 @@ public class Peer implements PeerInterface {
             byte[] fileBytes = new byte[PIECE_SIZE];
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
             int offset = piece * PIECE_SIZE;
-            System.out.println("About to read fully for offset " + offset);
-            file.read(fileBytes, offset, PIECE_SIZE);
+            int currPieceSize = PIECE_SIZE;
+            if (file.length() < offset + PIECE_SIZE) {
+                currPieceSize = (int)file.length() - offset;
+            } 
+            System.out.println("About to read fully for offset " + offset + " and piece " + piece);
+            file.read(fileBytes, offset, currPieceSize);
             print("read fully");
 
             file.close();
@@ -263,8 +267,8 @@ public class Peer implements PeerInterface {
             System.out.println(data);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
-            fileName.seek(offset);
-            fileName.write(data);
+            // fileName.seek(offset);
+            fileName.write(data, offset, PIECE_SIZE);
         } catch (Exception e) {
             System.out.println("Exception in writing file");
             e.printStackTrace();
