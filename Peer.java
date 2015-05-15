@@ -185,6 +185,18 @@ public class Peer implements PeerInterface {
         myFiles.put(fileName, newFile);
     }
 
+    private static void printDoubleList(ArrayList<ArrayList<String>> list) {
+        int counter = 0;
+        for (ArrayList<String> firstList : list) {
+            System.out.print("LIST " + counter + ": ");
+            for (String element : firstList) {
+                System.out.print(element + ", ");
+            }
+            System.out.println();
+            counter++;
+        }
+    }
+
     /*
      * Connects to head tracker and asks for peers that have a certain file.
      * Tracker returns a list of peerInfo strings with "peerName,portNo"
@@ -224,17 +236,34 @@ public class Peer implements PeerInterface {
             // Each index corresponds to a piece of the file
             // The elements of the inner array lists are peer information of peers with that pieces
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
+            pieceBreakdown.addAll(getFilePieces(fileName, numFilePieces, peersWithFile));
+            System.out.println("Broke down pieces!");
+
+            printDoubleList(pieceBreakdown);
+
+            downloadFile(fileName, pieceBreakdown);
+
+        } catch (Exception e) {
+            System.out.println("Exception in placing request");
+            e.printStackTrace();
+        }
+    }
+
+    private static ArrayList<ArrayList<String>> getFilePieces(String fileName, int numFilePieces, ArrayList<String> peersWithFile){
+        try {
+            ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             for (int i = 0; i < numFilePieces; i++) {
                 ArrayList<String> temp = new ArrayList<String>();
                 pieceBreakdown.add(temp);
             }
-            System.out.println("Broke down pieces!");
 
             // For every peer who the tracker says the file has, request information on how many pieces 
             // they have
             for (String peerInfo : peersWithFile) {
+                ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
+
                 int colonIndex = peerInfo.indexOf(":");
-                if (colonIndex == -1) { return; } //error
+                if (colonIndex == -1) { return null; } //error
 
                 String peerName = peerInfo.substring(0, colonIndex);
                 String portNo = peerInfo.substring(colonIndex+1, peerInfo.length());
@@ -242,14 +271,22 @@ public class Peer implements PeerInterface {
 
                 if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
 
-                ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
                 peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
 
                 for (Integer piece : peerHasMe) {
                     pieceBreakdown.get((int)piece).add(peerName);
                 }
             }
+            return pieceBreakdown;
+        } catch (Exception e) {
+            System.out.println("Exception in 'getFilePieces'");
+            e.printStackTrace();
+        }
+        return null;
+    }
 
+    private static void downloadFile(String fileName, ArrayList<ArrayList<String>> pieceBreakdown) {
+        try {
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
 
             // Iterate through pieces and request them
@@ -277,13 +314,11 @@ public class Peer implements PeerInterface {
             }
 
             outFile.close();
-
         } catch (Exception e) {
-            System.out.println("Exception in placing request");
+            System.out.println("Exception in 'downloadFile'");
             e.printStackTrace();
         }
     }
-
 
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
