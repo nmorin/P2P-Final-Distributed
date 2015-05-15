@@ -217,9 +217,7 @@ public class Peer implements PeerInterface {
                 String portNo = peerInfo.substring(colonIndex+1, peerInfo.length());
                 connectToPeer(peerName, Integer.parseInt(portNo)); //establishes connections
 
-                if (peerName.equals(myName)) {
-                    continue;
-                }
+                if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
 
                 ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
                 peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
