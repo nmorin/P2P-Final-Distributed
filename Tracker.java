@@ -15,12 +15,12 @@ public class Tracker implements TrackerInterface {
 
 	}
 
-	public ArrayList<String> query(String fileName, String name, int portNum) {
+	public ArrayList<String> query(String fileName, String name, int portNum, String host) {
 		ArrayList<String> response = new ArrayList<String>();
 		if (trackerFiles.containsKey(fileName)) {
 			TrackerFile temp = trackerFiles.get(fileName);
 			response = temp.getPeerList();
-			temp.addPeer(name, portNum);
+			temp.addPeer(name, portNum, host);
 			System.out.println("Yes, I have file " + fileName);
 		} else {
 			System.out.println("Tracker found no record of " + fileName);
@@ -29,12 +29,12 @@ public class Tracker implements TrackerInterface {
 		return response;
 	}
 
-	public void seedFile(String fileName, String peerName, int peerPort, int fileSize, int numPieces) {
+	public void seedFile(String fileName, String peerName, int peerPort, String host, int fileSize, int numPieces) {
 		if (trackerFiles.containsKey(fileName)) { 
 			System.out.println("A file by that name is already in tracker's database");
 			return; 
 		}
-		TrackerFile temp = new TrackerFile(fileName, peerName, peerPort, fileSize, numPieces);
+		TrackerFile temp = new TrackerFile(fileName, peerName, peerPort, host, fileSize, numPieces);
 		trackerFiles.put(fileName, temp);
 		System.out.println("Added file " + fileName + " from peer " + peerName);
 		System.out.println("Peer list of " + fileName + ": " + temp.peerListToString());

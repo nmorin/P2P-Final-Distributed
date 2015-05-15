@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.*;
+import java.net.InetAddress;
 
 import java.util.Scanner;
 import java.util.Random;
@@ -23,10 +24,9 @@ import java.rmi.server.UnicastRemoteObject;
 public class Peer implements PeerInterface {
 
     private static String myName;
+    private static String myHost;
     private static int myPortNum;
 
-    private final int ID_MAX = 999999999;
-    private final int ID_MIN = 100000000;
     private static final int PIECE_SIZE = 60;
 
     private static boolean alreadyConnectedToTracker = false;
@@ -98,33 +98,28 @@ public class Peer implements PeerInterface {
         return myFiles.get(fileName).getCompletePieces();
     }
 
-    private String createRandomID() {
-        Random rand = new Random();
-        int id = rand.nextInt((ID_MAX - ID_MIN) + 1) + ID_MIN;
-        String idString = Integer.toString(id);
-        return idString;
-    }
+    // private String createRandomID() {
+    //     Random rand = new Random();
+    //     int id = rand.nextInt((ID_MAX - ID_MIN) + 1) + ID_MIN;
+    //     String idString = Integer.toString(id);
+    //     return idString;
+    // }
 
     /* Creates and binds an instance of the peer's registry so it can
     be accessed by others and make connections */
     private static void createAndBindSelf() {
          try {
-            // Commented out names to perform hardcoded testing
-            // String name = createRandomID();
-            // String name = String.valueOf(myPortNum);
             Peer peer = new Peer();
             PeerInterface peerStub = (PeerInterface) UnicastRemoteObject.exportObject(peer, 0);
             Registry registry = LocateRegistry.createRegistry(myPortNum);
             registry.bind(myName, peerStub);
             System.out.println("Binding complete");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
-    private static void connectToPeer(String peerName, int peerPort) {
+    private static void connectToPeer(String peerName, int peerPort, String host) {
         try {
             // Checks if peer is already bound or not
             PeerInterface temp = peerStubs.get(peerName);
@@ -133,7 +128,7 @@ public class Peer implements PeerInterface {
             System.out.println("\n Peername: " + peerName);
             System.out.println("\n Port: " + peerPort);
 
-            Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
+            Registry theirReg = LocateRegistry.getRegistry(host, peerPort);
             PeerInterface boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
             peerStubs.put(peerName, boundPeerStub);
             System.out.println("Found peer " + peerName);
@@ -175,7 +170,7 @@ public class Peer implements PeerInterface {
         int lengthInBytes = (int) file.length();
         int numPieces = getNumPieces(lengthInBytes);
         try {
-            leadTrackerStub.seedFile(fileName, myName, myPortNum, lengthInBytes, numPieces);
+            leadTrackerStub.seedFile(fileName, myName, myPortNum, myHost, lengthInBytes, numPieces);
             System.out.println("Seeding complete");
         } catch (Exception e) {
             System.out.println("Exception in seeding file");
@@ -209,7 +204,7 @@ public class Peer implements PeerInterface {
         try {
             connectToTracker();
 
-            ArrayList<String> peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum);
+            ArrayList<String> peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
 
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
@@ -230,7 +225,6 @@ public class Peer implements PeerInterface {
                 PeerFile temp = new PeerFile(fileName, numFilePieces, fileSize, true);
                 myFiles.put(fileName, temp);
             }
-
 
             // PieceBreakdown is a 2d list, that holds lists of strings;
             // Each index corresponds to a piece of the file
@@ -263,11 +257,13 @@ public class Peer implements PeerInterface {
                 ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
 
                 int colonIndex = peerInfo.indexOf(":");
+                int semiColonIndex = peerInfo.indexOf(";");
                 if (colonIndex == -1) { return null; } //error
 
                 String peerName = peerInfo.substring(0, colonIndex);
-                String portNo = peerInfo.substring(colonIndex+1, peerInfo.length());
-                connectToPeer(peerName, Integer.parseInt(portNo)); //establishes connections
+                String portNo = peerInfo.substring(colonIndex+1, semiColonIndex);
+                String host = peerInfo.substring(colonIndex+1, peerInfo.length());
+                connectToPeer(peerName, Integer.parseInt(portNo), host); //establishes connections
 
                 if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
 
@@ -294,7 +290,6 @@ public class Peer implements PeerInterface {
             for (ArrayList<String> peersWhoHavePiece : pieceBreakdown) {
                 counter++;
 
-                // always should have the "placeholder" in position 0, so start with 1
                 if (peersWhoHavePiece.size() < 1) {
                     System.out.println("NO PERSON HAS PIECE " + counter + " FOR FILE "+fileName);
                     continue;
@@ -310,7 +305,6 @@ public class Peer implements PeerInterface {
                     myFiles.get(fileName).finishedDownloadingPiece(counter);
                     writeBytes(answer, outFile, counter);
                 }
-                
             }
 
             outFile.close();
@@ -366,14 +360,14 @@ public class Peer implements PeerInterface {
             String secondPartOfRequest = "";
 
             // Add a peer
-            if (parsedRequest[0].equals("connect")) {
-                String name = parsedRequest[1];
-                int port = Integer.parseInt(parsedRequest[2]);
-                connectToPeer(name, port);
-            }
+            // if (parsedRequest[0].equals("connect")) {
+            //     String name = parsedRequest[1];
+            //     int port = Integer.parseInt(parsedRequest[2]);
+            //     connectToPeer(name, port,);
+            // }
 
             // Seed a file
-            else if (parsedRequest[0].equals("seed")) {
+            if (parsedRequest[0].equals("seed")) {
                 String name = parsedRequest[1];
                 seedFile(name);
             }
@@ -391,7 +385,6 @@ public class Peer implements PeerInterface {
         }
     }
 
-
     /* to run: 
     java Peer localhost <your port> <your name> 
     to connect to more peers: first start them on their ports, then enter command:
@@ -400,24 +393,25 @@ public class Peer implements PeerInterface {
     request <their name>
     to seed a file, enter command: 
     seed <file name>
-
     */
 	public static void main(String[] argv) {
         String host = (argv.length < 1) ? "localhost" : argv[0];
         myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
         myName = (argv.length < 3) ? "Howard" : (argv[2]);
 
+        try {
+            myHost = InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         System.out.println("My portnum: " + myPortNum + "\n My name: " + myName + "\n");
 
         createAndBindSelf();
         parseInput();
     }
 
-
 }
-
-
-
 
 
 
