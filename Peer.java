@@ -82,7 +82,6 @@ public class Peer implements PeerInterface {
 
             String s = new String(fileBytes);
             print("File bytes: " + s);
-
             file.close();
             return fileBytes;
 
@@ -281,8 +280,8 @@ public class Peer implements PeerInterface {
             System.out.println(s);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
-            fileName.seek(offset);
-            fileName.write(data);
+            // fileName.seek(offset);
+            fileName.write(data, offset, PIECE_SIZE);
         } catch (Exception e) {
             System.out.println("Exception in writing file");
             e.printStackTrace();
