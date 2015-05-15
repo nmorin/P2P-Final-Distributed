@@ -71,7 +71,16 @@ public class Peer implements PeerInterface {
 
     /* Returns a list of the pieces this peer has of the specified file */
     public ArrayList<Integer> requestPieceInfo(String fileName) {
-        return myFiles.get(fileName).getCompletePieces();
+        int size = 0;
+        File f = new File(fileName);
+        size = (int) f.length();
+        int numpiece = getNumPieces(size);
+        ArrayList<Integer> temp = new ArrayList<Integer>();
+        for (int i = 0; i < numpiece; i++) {
+            temp.add((Integer)i);
+        }
+        return temp;
+        // return myFiles.get(fileName).getCompletePieces();
     }
 
     private String createRandomID() {
@@ -105,6 +114,9 @@ public class Peer implements PeerInterface {
             // Checks if peer is already bound or not
             PeerInterface temp = peerStubs.get(peerName);
             if (temp != null) { return; }
+
+            System.out.println("\n Peername: " + peerName);
+            System.out.println("\n Port: " + peerPort);
 
             Registry theirReg = LocateRegistry.getRegistry("localhost", peerPort);
             PeerInterface boundPeerStub = (PeerInterface) theirReg.lookup(peerName);
@@ -172,6 +184,7 @@ public class Peer implements PeerInterface {
 
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
+                System.out.println("Found peer list!");
                 fileSize = Integer.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
             } else {
@@ -188,13 +201,19 @@ public class Peer implements PeerInterface {
                 pieceBreakdown.add(temp);
             }
 
+            System.out.println("Broke down pieces!");
+
             for (String peerInfo : peersWithFile) {
                 int colonIndex = peerInfo.indexOf(":");
                 if (colonIndex == -1) { return; } //error
 
-                String peerName = peerInfo.substring(colonIndex);
+                System.out.println("Connecting to a peer now::::");
+
+                String peerName = peerInfo.substring(0, colonIndex);
                 String portNo = peerInfo.substring(colonIndex+1, peerInfo.length());
                 connectToPeer(peerName, Integer.parseInt(portNo)); //establishes connections
+
+                System.out.println("Conected to them!");
 
                 ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
                 peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
