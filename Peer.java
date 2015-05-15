@@ -219,14 +219,19 @@ public class Peer implements PeerInterface {
                 myFiles.put(fileName, temp);
             }
 
+
+            // PieceBreakdown is a 2d list, that holds lists of strings;
+            // Each index corresponds to a piece of the file
+            // The elements of the inner array lists are peer information of peers with that pieces
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             for (int i = 0; i < numFilePieces; i++) {
                 ArrayList<String> temp = new ArrayList<String>();
                 pieceBreakdown.add(temp);
             }
-
             System.out.println("Broke down pieces!");
 
+            // For every peer who the tracker says the file has, request information on how many pieces 
+            // they have
             for (String peerInfo : peersWithFile) {
                 int colonIndex = peerInfo.indexOf(":");
                 if (colonIndex == -1) { return; } //error
@@ -247,15 +252,14 @@ public class Peer implements PeerInterface {
 
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
 
-            print("hey now HERE");
-
+            // Iterate through pieces and request them
             int counter = -1;
             for (ArrayList<String> peersWhoHavePiece : pieceBreakdown) {
                 counter++;
 
                 // always should have the "placeholder" in position 0, so start with 1
                 if (peersWhoHavePiece.size() < 1) {
-                    System.out.println("NO PERSON HAS PIECE FOR FILE "+fileName);
+                    System.out.println("NO PERSON HAS PIECE " + counter + " FOR FILE "+fileName);
                     continue;
                 }
 
@@ -263,7 +267,13 @@ public class Peer implements PeerInterface {
 
                 // temp testing just go with the first peer in the list:
                 byte[] answer = askForFilePiece(peersWhoHavePiece.get(0), fileName, counter);
-                writeBytes(answer, outFile, counter);
+                if (answer == null) {
+                    // Request unsuccesful; handle here
+                } else {
+                    myFiles.get(fileName).successFullyDownloadedPiece(counter);
+                    writeBytes(answer, outFile, counter);
+                }
+                
             }
 
             outFile.close();
@@ -273,6 +283,8 @@ public class Peer implements PeerInterface {
             e.printStackTrace();
         }
     }
+
+
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
         try {

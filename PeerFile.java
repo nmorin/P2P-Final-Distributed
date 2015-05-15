@@ -38,6 +38,11 @@ public class PeerFile {
 
 	public ArrayList<String> getPeerList() { return peersWithFile; }
 
+	public void successFullyDownloadedPiece(int pieceNum) {
+		neededPieces.remove((Integer)pieceNum);
+		completePieces.add((Integer)pieceNum);
+	}
+
 	public int getSize() { return size; }
 
 	public int getNumPieces() { return numPieces; }
