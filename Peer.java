@@ -60,13 +60,13 @@ public class Peer implements PeerInterface {
 
             byte[] fileBytes = new byte[PIECE_SIZE];
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
-            long offset = (long) piece * PIECE_SIZE;
-            file.seek(offset);
-            System.out.println("About to read fully");
-            file.readFully(fileBytes);
+            int offset = piece * PIECE_SIZE;
+            System.out.println("About to read fully for offset " + offset);
+            file.read(fileBytes, offset, PIECE_SIZE);
             print("read fully");
 
             file.close();
+            System.out.println("filebytes: " + fileBytes);
             return fileBytes;
 
         } catch (Exception e) {
@@ -259,6 +259,8 @@ public class Peer implements PeerInterface {
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
         try {
+            System.out.println("writing my bytes man");
+            System.out.println(data);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
             fileName.seek(offset);
