@@ -307,7 +307,7 @@ public class Peer implements PeerInterface {
                 if (answer == null) {
                     // Request unsuccesful; handle here
                 } else {
-                    myFiles.get(fileName).successFullyDownloadedPiece(counter);
+                    myFiles.get(fileName).finishedDownloadingPiece(counter);
                     writeBytes(answer, outFile, counter);
                 }
                 
