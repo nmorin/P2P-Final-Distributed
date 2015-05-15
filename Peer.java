@@ -37,7 +37,7 @@ public class Peer implements PeerInterface {
     private static TrackerInterface leadTrackerStub;
     private static Map<String, PeerInterface> peerStubs;
 
-    private Map<String, PeerFile> myFiles;
+    private static Map<String, PeerFile> myFiles;
 
     private static void print(String s) {
         System.out.println(s);
@@ -51,17 +51,10 @@ public class Peer implements PeerInterface {
 
     public byte[] requestFile(String fileName, int piece) {
         try {
-            // int bytesRead;
-            // FileInputStream fileInput = new FileInputStream(fileName);
-            // byte[] fileBytes = new byte[(int)(new File(fileName).length())];
-            // bytesRead = fileInput.read(fileBytes);
-            // assert(bytesRead == fileBytes.length);
-            // return fileBytes;
-
-            byte[] fileBytes;// = new byte[PIECE_SIZE];
+            byte[] fileBytes;
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
-            int size = (int) file.length();
-            int numPieces = getNumPieces(size);
+            int size = myFiles.get(fileName).getSize();
+            int numPieces = myFiles.get(fileName).getNumPieces();
 
             int offset = piece * PIECE_SIZE;
             int amountToRead;
@@ -72,11 +65,11 @@ public class Peer implements PeerInterface {
                 amountToRead = PIECE_SIZE;
                 fileBytes = new byte[PIECE_SIZE];
             }
+
             print("Length: " + size + " Piece size:" + PIECE_SIZE);
             print("Numpieces: " + numPieces + " Offset: " + offset);
             print("amountToRead: " + amountToRead);
 
-            // file.read(fileBytes, offset, amountToRead);
             file.seek((long) offset);
             file.read(fileBytes);
 
@@ -93,16 +86,16 @@ public class Peer implements PeerInterface {
 
     /* Returns a list of the pieces this peer has of the specified file */
     public ArrayList<Integer> requestPieceInfo(String fileName) {
-        int size = 0;
-        File f = new File(fileName);
-        size = (int) f.length();
-        int numpiece = getNumPieces(size);
-        ArrayList<Integer> temp = new ArrayList<Integer>();
-        for (int i = 0; i < numpiece; i++) {
-            temp.add((Integer)i);
-        }
-        return temp;
-        // return myFiles.get(fileName).getCompletePieces();
+        // int size = 0;
+        // File f = new File(fileName);
+        // size = (int) f.length();
+        // int numpiece = getNumPieces(size);
+        // ArrayList<Integer> temp = new ArrayList<Integer>();
+        // for (int i = 0; i < numpiece; i++) {
+        //     temp.add((Integer)i);
+        // }
+        // return temp;
+        return myFiles.get(fileName).getCompletePieces();
     }
 
     private String createRandomID() {
@@ -188,6 +181,8 @@ public class Peer implements PeerInterface {
             System.out.println("Exception in seeding file");
             e.printStackTrace();
         }
+        PeerFile newFile = new PeerFile(fileName, numPieces, lengthInBytes);
+        myFiles.put(fileName, newFile);
     }
 
     /*
