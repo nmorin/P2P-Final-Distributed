@@ -20,17 +20,16 @@ public class TrackerFile {
 
 	private static String fileName;
 	private static ArrayList<String> peersWithFile;
-	private static int fileSize;
 	private static int numPieces;
 
 
-	public TrackerFile(String fileName_, String peerName_, int peerPort_, int fileSize_, int numPieces_) {
+	public TrackerFile(String fileName_, String peerName, int peerPort, int fileSize, int numPieces_) {
 		peersWithFile = new ArrayList<String>();
 		fileName = fileName_;
-		String size = Integer.toString(fileSize_);
-		String temp = peerName_ + ":" + Integer.toString(peerPort_);
+		String size = Integer.toString(fileSize);
+		String temp = peerName + ":" + Integer.toString(peerPort);
+		peersWithFile.add(size);
 		peersWithFile.add(temp);
-		fileSize = fileSize_;
 		numPieces = numPieces_;
     }
 
@@ -43,8 +42,6 @@ public class TrackerFile {
 		}
 		return listString;
 	}
-
-	public int getFileSize() { return fileSize; }
 
 	public ArrayList<String> getPeerList() { return peersWithFile; }
 
