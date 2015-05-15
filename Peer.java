@@ -181,7 +181,7 @@ public class Peer implements PeerInterface {
             System.out.println("Exception in seeding file");
             e.printStackTrace();
         }
-        PeerFile newFile = new PeerFile(fileName, numPieces, lengthInBytes);
+        PeerFile newFile = new PeerFile(fileName, numPieces, lengthInBytes, false);
         myFiles.put(fileName, newFile);
     }
 
@@ -204,6 +204,7 @@ public class Peer implements PeerInterface {
                 System.out.println("Found peer list!");
                 fileSize = Integer.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
+
             } else {
                 System.out.println("File not found");
                 return;
@@ -211,6 +212,12 @@ public class Peer implements PeerInterface {
 
             // returns num totalpieces
             int numFilePieces = getNumPieces(fileSize);
+
+            // Check if already have record of that file in myFiles; if not, add
+            if (myFiles.get(fileName) == null) {
+                PeerFile temp = new PeerFile(fileName, numFilePieces, fileSize, true);
+                myFiles.put(fileName, temp);
+            }
 
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             for (int i = 0; i < numFilePieces; i++) {
@@ -265,7 +272,6 @@ public class Peer implements PeerInterface {
             System.out.println("Exception in placing request");
             e.printStackTrace();
         }
-        
     }
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {

@@ -11,30 +11,25 @@ public class PeerFile {
 	private static int size;
 
 	// Called after initiating a file request
-	public PeerFile(String fileName, int numPieces, ArrayList<String> peersWithFile, int size) {
+	public PeerFile(String fileName, int numPieces, int size, boolean downloadingFile) {
 		this.fileName = fileName;
 		this.size = size;
 		this.numPieces = numPieces;
-		this.peersWithFile = new ArrayList<String>();
-		this.peersWithFile.addAll(peersWithFile);
+		// this.peersWithFile = new ArrayList<String>();
+		// this.peersWithFile.addAll(peersWithFile);
 		this.completePieces = new ArrayList<Integer>();
 		this.neededPieces = new ArrayList<Integer>();
-		for (int i = 0; i < numPieces; i++) {
-			this.neededPieces.add((Integer)i);
+		if (downloadingFile) {
+			for (int i = 0; i < numPieces; i++) {
+				this.neededPieces.add((Integer)i);
+			}
+		} else {
+			// Assume seeding
+			for (int i = 0; i < numPieces; i++) {
+				this.completePieces.add((Integer)i);
+			}
 		}
-	}
-
-	// Called when seeding a file
-	public PeerFile(String fileName, int numPieces, int size) {
-		this.fileName = fileName;
-		this.numPieces = numPieces;
-		this.size = size;
-		this.peersWithFile = new ArrayList<String>();
-		this.completePieces = new ArrayList<Integer>();
-		this.neededPieces = new ArrayList<Integer>();
-		for (int i = 0; i < numPieces; i++) {
-			this.completePieces.add((Integer)i);
-		}
+		
 	}
 
 	public ArrayList<Integer> getPiecesNeeded() { return neededPieces; }
