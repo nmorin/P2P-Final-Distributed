@@ -39,6 +39,10 @@ public class Peer implements PeerInterface {
 
     private Map<String, PeerFile> myFiles;
 
+    private static void print(String s) {
+        System.out.println(s);
+    }
+
 	public Peer() {
         super();
         peerStubs = new HashMap<String, PeerInterface>();
@@ -58,8 +62,10 @@ public class Peer implements PeerInterface {
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
             long offset = (long) piece * PIECE_SIZE;
             file.seek(offset);
-
+            System.out.println("About to read fully");
             file.readFully(fileBytes);
+            print("read fully");
+
             file.close();
             return fileBytes;
 
@@ -207,13 +213,9 @@ public class Peer implements PeerInterface {
                 int colonIndex = peerInfo.indexOf(":");
                 if (colonIndex == -1) { return; } //error
 
-                System.out.println("Connecting to a peer now::::");
-
                 String peerName = peerInfo.substring(0, colonIndex);
                 String portNo = peerInfo.substring(colonIndex+1, peerInfo.length());
                 connectToPeer(peerName, Integer.parseInt(portNo)); //establishes connections
-
-                System.out.println("Conected to them!");
 
                 ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
                 peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
@@ -225,6 +227,8 @@ public class Peer implements PeerInterface {
 
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
 
+            print("hey now HERE");
+
             int counter = -1;
             for (ArrayList<String> peersWhoHavePiece : pieceBreakdown) {
                 counter++;
@@ -235,8 +239,10 @@ public class Peer implements PeerInterface {
                     continue;
                 }
 
+                print("REUEST");
+
                 // temp testing just go with the first peer in the list:
-                byte[] answer = askForFilePiece(peersWhoHavePiece.get(1), fileName, counter);
+                byte[] answer = askForFilePiece(peersWhoHavePiece.get(0), fileName, counter);
                 writeBytes(answer, outFile, counter);
             }
 
@@ -267,6 +273,7 @@ public class Peer implements PeerInterface {
      * peer end to make sure this information is correct.
      */
     private static byte[] askForFilePiece(String peerName, String fileName, int piece) {
+        print("I, " + myName + " am requesting " + fileName + " frm " + peerName + "\n\n");
         try {
             byte[] answer = peerStubs.get(peerName).requestFile(fileName, piece);
             return answer;
