@@ -301,11 +301,28 @@ public class Peer implements PeerInterface {
  
 // };
 
-    private static int[] sortArrayOfIndices(int numPieces) {
+    private static int[] sortArrayOfIndices(int numPieces, ArrayList<ArrayList<String>> pieceBreakdown) {
+        int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
-        // TODO: this is just so we have indices in the array, this is not correctly 'sorted'
+
         for (int i = 0; i < numPieces; i++) {
+            numsInList[i] = pieceBreakdown.get(i).size();
             indexArray[i] = i;
+        }
+
+        // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
+        for (int i = 0; i < numPieces; i++) {
+            for (int j = 0; j < numPieces - 1; j++) {
+                if (numsInList[j] > numsInList[j+1]) {
+                    int temp = numsInList[j+1];
+                    numsInList[j+1] = numsInList[j];
+                    numsInList[j] = temp;
+
+                    temp = indexArray[j];
+                    indexArray[j+1] = indexArray[j];
+                    indexArray[j] = temp;
+                }
+            }
         }
 
         return indexArray;
@@ -332,7 +349,7 @@ public class Peer implements PeerInterface {
             int[] indexArray = new int[numPieces];
 
             // copies into index array sortex indices
-            System.arraycopy(sortArrayOfIndices(numPieces), 0, indexArray, 0, numPieces);
+            System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
 
             // Iterate through pieces and request them
             int counter = -1;
