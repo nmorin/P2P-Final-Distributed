@@ -356,15 +356,13 @@ public class Peer implements PeerInterface {
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
             int numPieces = myFiles.get(fileName).getNumPieces();
             int[] indexArray = new int[numPieces];
-
-            // copies into index array sortex indices
+            // copies into index array sorted indices
             System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
 
             // Iterate through pieces and request them
             int counter = -1;
 
-            myFiles.get(fileName).printLists();
-
+            // myFiles.get(fileName).printLists();
             while (!myFiles.get(fileName).getPiecesNeeded().isEmpty() ||
                    !myFiles.get(fileName).getDownloadingPieces().isEmpty()) {
 
@@ -385,33 +383,26 @@ public class Peer implements PeerInterface {
                 }
 
                 for (int indexOfPeerName = 0; indexOfPeerName < pieceBreakdown.get(currentPiece).size(); indexOfPeerName++) {
-                    if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(pieceBreakdown.get(currentPiece).get(indexOfPeerName))) {
+                    String peerName = pieceBreakdown.get(currentPiece).get(indexOfPeerName);
+
+                    if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(peerName)) {
                         System.out.println("Continue part 2");
                         continue;   // don't want to download from someone we are already downloading from
                     }
                     //otherwise download from k:
-                    myFiles.get(fileName).startDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
+                    myFiles.get(fileName).startDownloadingPiece(currentPiece, peerName);
                     int sizeOfThisPiece = getThisPieceSize(myFiles.get(fileName), currentPiece);
                     System.out.println("size of this piece = " + sizeOfThisPiece);
 
-                    byte[] answer = new byte[sizeOfThisPiece];
-                    System.arraycopy(askForFilePiece(pieceBreakdown.get(currentPiece).get(indexOfPeerName), fileName, currentPiece), 0, answer, 0, sizeOfThisPiece);
-
-                    System.out.println("Anaswer = " + answer);
-
-                    if (answer == null) {
-                        // Request unsuccesful; handle here
-
-                        myFiles.get(fileName).noLongerDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
-                    } else {
-                        myFiles.get(fileName).finishedDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
-                        writeBytes(answer, outFile, currentPiece);
-                        break;
-                    }
+                    print("Making a thread, oh god....");
+                    ConcurrentPieceRequest newPieceRequest = new ConcurrentPieceRequest(fileName, peerName, currentPiece, sizeOfThisPiece, outFile);
+                    newPieceRequest.start();
                 }
+
+
             }
 
-            outFile.close();
+            // outFile.close();
 
         } catch (Exception e) {
             System.out.println("Exception in 'downloadFile'");
@@ -515,7 +506,70 @@ public class Peer implements PeerInterface {
         parseInput();
     }
 
+
+
+
+
+
+
+
+
+    /* Class used to run multiple concurrent threads, when calculating
+     * the time it takes for each request. */
+    private static class ConcurrentPieceRequest extends Thread {
+        private Thread t;
+        private String requestType;
+        private String fileName;
+        private String peerName;
+        private int currentPiece;
+        private int sizeOfThisPiece;
+        private RandomAccessFile outFile;
+       
+        ConcurrentPieceRequest(String fileName, String peerName, int currentPiece, int sizeOfThisPiece, RandomAccessFile outFile ) {
+            this.sizeOfThisPiece = sizeOfThisPiece;
+            this.peerName = peerName;
+            this.fileName = fileName;
+            this.currentPiece = currentPiece;
+            this.outFile = outFile;
+        }
+
+        public void run() {
+
+            try {
+                print("INside thread, mother of god");
+                byte[] answer = new byte[sizeOfThisPiece];
+                System.arraycopy(askForFilePiece(peerName, fileName, currentPiece), 0, answer, 0, sizeOfThisPiece);
+
+                System.out.println("Anaswer = " + answer);
+
+                if (answer == null) {
+                    myFiles.get(fileName).noLongerDownloadingPiece(currentPiece, peerName);
+                } else {
+                    myFiles.get(fileName).finishedDownloadingPiece(currentPiece, peerName);
+                    writeBytes(answer, outFile, currentPiece);
+                    print("has it owrked???");
+                }
+
+            } catch (Exception e) {
+                System.out.println("Thread interrupted.");
+            }
+        }
+       
+        public void start()
+        {
+            if (t == null) {
+                t = new Thread (this, peerName);
+                t.start(); 
+            }
+        }
+    }
+
+
+
+
 }
+
+
 
 
 
