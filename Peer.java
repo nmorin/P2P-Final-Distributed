@@ -547,8 +547,6 @@ public class Peer implements PeerInterface {
         myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
         myName = (argv.length < 3) ? "Howard" : (argv[2]);
 
-        timer = new Timer();
-
         // try {
         //     myHost = InetAddress.getLocalHost().getHostAddress();
         // } catch (Exception e) {
