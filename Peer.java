@@ -56,7 +56,7 @@ public class Peer implements PeerInterface {
             int numPieces = myFiles.get(fileName).getNumPieces();
 
             int offset = piece * PIECE_SIZE;
-            int amountToRead = getThisPieceSize(myFiles.get(fileName).getNumPieces());
+            int amountToRead = getThisPieceSize(myFiles.get(fileName), piece);
             byte[] fileBytes = new byte[amountToRead];
 
             print("Length: " + size + " Piece size:" + PIECE_SIZE);
@@ -77,9 +77,9 @@ public class Peer implements PeerInterface {
         return null;
     }
 
-    private int getThisPieceSize(PeerFile file, int pieceNum) {
+    private static int getThisPieceSize(PeerFile file, int pieceNum) {
         if ((pieceNum+1)*PIECE_SIZE > file.getSize()) {
-            return file.getSize() - offset;
+            return file.getSize() - (pieceNum+1)*PIECE_SIZE;
         }
         return PIECE_SIZE;
     }
@@ -302,7 +302,7 @@ public class Peer implements PeerInterface {
 // };
 
     private static int[] sortArrayOfIndices(int numPieces) {
-        int indexArray = new int[numPieces];
+        int[] indexArray = new int[numPieces];
         // TODO: this is just so we have indices in the array, this is not correctly 'sorted'
         for (int i = 0; i < numPieces; i++) {
             indexArray[i] = i;
@@ -329,7 +329,7 @@ public class Peer implements PeerInterface {
 
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
             int numPieces = myFiles.get(fileName).getNumPieces();
-            int indexArray = new int[numPieces];
+            int[] indexArray = new int[numPieces];
 
             // copies into index array sortex indices
             System.arraycopy(sortArrayOfIndices(numPieces), 0, indexArray, 0, numPieces);
@@ -354,12 +354,12 @@ public class Peer implements PeerInterface {
                 }
 
                 for (int indexOfPeerName = 0; indexOfPeerName < pieceBreakdown.get(currentPiece).size(); indexOfPeerName++) {
-                    if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(pieceBreakdown.get(pieceBreakdown).get(indexOfPeerName))) {
+                    if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(pieceBreakdown.get(currentPiece).get(indexOfPeerName))) {
                         continue;   // don't want to download from someone we are already downloading from
                     }
                     //otherwise download from k:
                     myFiles.get(fileName).startDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
-                    int sizeOfThisPiece = getThisPieceSize(fileName, currentPiece);
+                    int sizeOfThisPiece = getThisPieceSize(myFiles.get(fileName), currentPiece);
 
                     byte[] answer = new byte[sizeOfThisPiece];
                     System.arraycopy(askForFilePiece(pieceBreakdown.get(currentPiece).get(indexOfPeerName), fileName, currentPiece), 0, answer, 0, sizeOfThisPiece);
@@ -370,7 +370,7 @@ public class Peer implements PeerInterface {
                         myFiles.get(fileName).noLongerDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
                     } else {
                         myFiles.get(fileName).finishedDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
-                        writeBytes(answer, outFile, counter);
+                        writeBytes(answer, outFile, currentPiece);
                         break;
                     }
                 }
