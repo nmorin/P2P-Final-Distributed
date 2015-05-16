@@ -14,6 +14,7 @@ public class PeerFile {
 	private static ArrayList<String> currentlyDownloadingFrom;
 	private static int size;
 	private static int[] fileBitPieces;
+	private static int piecesComplete;
 
 	// Called after initiating a file request
 	public PeerFile(String fileName, int numPieces, int size, boolean downloadingFile) {
@@ -24,17 +25,18 @@ public class PeerFile {
 		this.neededPieces = new ArrayList<Integer>();
 		this.downloadingPieces = new ArrayList<Integer>();
 		this.currentlyDownloadingFrom = new ArrayList<String>();
-		fileBitPieces = new int[numPieces];
+		this.fileBitPieces = new int[numPieces];
+		this.piecesComplete = 0;
 		if (downloadingFile) {
 			for (int i = 0; i < numPieces; i++) {
 				this.neededPieces.add((Integer)i);
-				fileBitPieces[i] = NOPIECE;
+				this.fileBitPieces[i] = NOPIECE;
 			}
 		} else {
 			// Assume seeding
 			for (int i = 0; i < numPieces; i++) {
 				this.completePieces.add((Integer)i);
-				fileBitPieces[i] = HASPIECE;
+				this.fileBitPieces[i] = HASPIECE;
 			}
 		}
 	}

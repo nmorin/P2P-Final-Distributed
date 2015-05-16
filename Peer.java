@@ -67,9 +67,10 @@ public class Peer implements PeerInterface {
             int amountToRead = getThisPieceSize(myFiles.get(fileName), piece);
             byte[] fileBytes = new byte[amountToRead];
 
-            print("Length: " + size + " Piece size:" + PIECE_SIZE);
-            print("Numpieces: " + numPieces + " Offset: " + offset);
-            print("amountToRead: " + amountToRead);
+            // print("Length: " + size + " Piece size:" + PIECE_SIZE);
+            // print("Numpieces: " + numPieces + " Offset: " + offset);
+            // print("amountToRead: " + amountToRead);
+            print("\nGiving away " + fileName);
 
             file.seek((long) offset);
             file.read(fileBytes);
@@ -142,7 +143,7 @@ public class Peer implements PeerInterface {
             System.out.println("Found peer " + peerName);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Peer doesn't exist right now. They have left the system!");
         }
     }
 
@@ -262,7 +263,7 @@ public class Peer implements PeerInterface {
             pieceBreakdown.addAll(getFilePieces(fileName, numFilePieces, peersWithFile));
             System.out.println("Broke down pieces!");
 
-            printDoubleList(pieceBreakdown);
+            // printDoubleList(pieceBreakdown);
 
             downloadFile(fileName, pieceBreakdown);
 
@@ -300,9 +301,24 @@ public class Peer implements PeerInterface {
 
                 if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
 
-                print("peername = " + peerName + " filename = " + fileName);
+                int askCounter = 0;
+                boolean didGetPieces = false;
+                while (askCounter < 2) {
+                    try {
+                        peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
+                        askCounter = 2;
+                        didGetPieces = true;
+                    } catch (Exception e) {
+                        System.out.println("catching exception in piece info");
+                        askCounter++;
+                    }
+                }
 
-                peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
+                if (!didGetPieces) {
+                    System.out.println("One peer is unresponsive, moving to next");
+                    peerStubs.remove(peerName);
+                    continue;
+                }
 
                 for (Integer piece : peerHasMe) {
                     if (!pieceBreakdown.get((int)piece).contains(peerName))
@@ -395,7 +411,7 @@ public class Peer implements PeerInterface {
                 }
 
                 if (pieceBreakdown.get(currentPiece).isEmpty() || continueCounter>=10) {
-                    System.out.println("TRYING TO RE-REQUEST");
+                    // System.out.println("TRYING TO RE-REQUEST");
                     if (continueCounter >= 10) { continueCounter = 0; }
                     else { reAskTrackerForPiece = currentPiece; }
 
@@ -409,13 +425,30 @@ public class Peer implements PeerInterface {
                     if (peersWithFile != null) { peersWithFile.remove(0); } // first index is file size
                     else { return; }
 
-                    pieceBreakdown.clear();
-                    pieceBreakdown.addAll(getFilePieces(fileName, numPieces, peersWithFile));
+                    int askCounter = 0;
+                    boolean didGetPieceBreakdown = false;
+                    while (askCounter < 3) {
+                        try {
+                            ArrayList<ArrayList<String>> tempBreakdown = new ArrayList<ArrayList<String>>();
+                            tempBreakdown.addAll(getFilePieces(fileName, numPieces, peersWithFile));
 
-                    printDoubleList(pieceBreakdown);
+                            pieceBreakdown.clear();
+                            pieceBreakdown.addAll(tempBreakdown);
 
-                    // resort "rarest first" array
-                    System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
+                            // resort "rarest first" array
+                            System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
+                            askCounter = 3;
+                            didGetPieceBreakdown = true;
+                        } catch (Exception e) {
+                            System.out.println("catching exception");
+                            askCounter++;
+                        }
+                    }
+
+                    if (!didGetPieceBreakdown) {
+                        System.out.println("Peers are unresponsive");
+                        continue;
+                    }
                 }
 
                 for (int indexOfPeerName = 0; indexOfPeerName < pieceBreakdown.get(currentPiece).size(); indexOfPeerName++) {
@@ -429,15 +462,16 @@ public class Peer implements PeerInterface {
                     //otherwise download from k:
                     myFiles.get(fileName).startDownloadingPiece(currentPiece, peerName);
                     int sizeOfThisPiece = getThisPieceSize(myFiles.get(fileName), currentPiece);
-                    System.out.println("size of this piece = " + sizeOfThisPiece);
+                    // System.out.println("size of this piece = " + sizeOfThisPiece);
 
                     if (rareTest && myFiles.get(fileName).getNumComplete() > numPieces/2) {
                         break;
                     }
 
-                    print("Making a thread, oh god....");
+                    // print("Making a thread, oh god....");
                     ConcurrentPieceRequest newPieceRequest = new ConcurrentPieceRequest(fileName, peerName, currentPiece, sizeOfThisPiece, outFile);
                     newPieceRequest.start();
+                    break;
                 }
                 if (rareTest && myFiles.get(fileName).getNumComplete() >= numPieces/2) {
                     break;
@@ -452,7 +486,7 @@ public class Peer implements PeerInterface {
         }
     }
 
-    private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
+    private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece, String peerName, String fileString) {
         try {
             System.out.println("Wryting bytes");
             String s = new String(data);
@@ -461,6 +495,14 @@ public class Peer implements PeerInterface {
             int offset = piece * PIECE_SIZE;
             fileName.seek(offset);
             fileName.write(data);
+            int numDone = myFiles.get(fileString).getNumComplete();
+            int numPieces = myFiles.get(fileString).getNumPieces();
+            double percent = (double)numDone / (double)numPieces;
+            percent = percent * 100.;
+
+            System.out.print("Downloaded piece " + piece + " from " + peerName + ": ");
+            System.out.printf("%%%.2f\n", percent);
+
         } catch (Exception e) {
             System.out.println("Exception in writing file");
             e.printStackTrace();
@@ -590,7 +632,7 @@ public class Peer implements PeerInterface {
                     myFiles.get(fileName).noLongerDownloadingPiece(currentPiece, peerName);
                 } else {
                     myFiles.get(fileName).finishedDownloadingPiece(currentPiece, peerName);
-                    writeBytes(answer, outFile, currentPiece);
+                    writeBytes(answer, outFile, currentPiece, peerName, fileName);
                 }
 
             } catch (Exception e) {
