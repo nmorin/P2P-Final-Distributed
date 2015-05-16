@@ -31,9 +31,9 @@ public class Peer implements PeerInterface {
     private static final int PIECE_SIZE = 180;
 
     private static boolean alreadyConnectedToTracker = false;
-    private static final String TRACKER_IP = "localhost";
+    // private static final String TRACKER_IP = "localhost";
     // private static final String TRACKER_IP = "52.5.152.108";    // Virginia, 1
-    // private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
+    private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
     
     private static final String TRACKER_NAME = "Tracker";
     private static final int TRACKER_PORT = 6666;
@@ -275,7 +275,8 @@ public class Peer implements PeerInterface {
                 peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
 
                 for (Integer piece : peerHasMe) {
-                    pieceBreakdown.get((int)piece).add(peerName);
+                    if (!pieceBreakdown.get((int)piece).contains(peerName))
+                        pieceBreakdown.get((int)piece).add(peerName);
                 }
             }
 
@@ -292,34 +293,36 @@ public class Peer implements PeerInterface {
         int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
 
-        System.out.print("LIST NUMS: ");
+        // System.out.print("LIST NUMS: ");
         for (int i = 0; i < numPieces; i++) {
             numsInList[i] = pieceBreakdown.get(i).size();
             indexArray[i] = i;
-            System.out.print(numsInList[i] + ", ");
+            // System.out.print(indexArray[i] + ", ");
         }
-        System.out.println();
+        // System.out.println();
 
         // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
         for (int i = 0; i < numPieces; i++) {
-            for (int j = 0; j < numPieces - 1; j++) {
-                if (numsInList[j] > numsInList[j+1]) {
-                    int temp = numsInList[j+1];
-                    numsInList[j+1] = numsInList[j];
+            for (int j = i+1; j < numPieces; j++) {
+                if (numsInList[i] > numsInList[j]) {
+                    int temp = numsInList[i];
+                    numsInList[i] = numsInList[j];
                     numsInList[j] = temp;
 
-                    temp = indexArray[j];
-                    indexArray[j+1] = indexArray[j];
+                    temp = indexArray[i];
+                    indexArray[i] = indexArray[j];
                     indexArray[j] = temp;
                 }
             }
         }
 
-        System.out.print("AFTER: ");
-        for (int i = 0; i < numPieces; i++) {
-            System.out.print(indexArray[i] + ", ");
-        }
-        System.out.println();
+        
+
+        // System.out.print("AFTER: ");
+        // for (int i = 0; i < numPieces; i++) {
+        //     System.out.print(indexArray[i] + ", ");
+        // }
+        // System.out.println();
 
         return indexArray;
     }
@@ -427,7 +430,7 @@ public class Peer implements PeerInterface {
         try {
             System.out.println("Wryting bytes");
             String s = new String(data);
-            System.out.println(s);
+            // System.out.println(s);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
             fileName.seek(offset);
