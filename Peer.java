@@ -27,10 +27,11 @@ public class Peer implements PeerInterface {
     private static String myHost;
     private static int myPortNum;
 
-    private static final int PIECE_SIZE = 60;
+    private static final int PIECE_SIZE = 180;
 
     private static boolean alreadyConnectedToTracker = false;
-    private static final String TRACKER_IP = "localhost";
+    // private static final String TRACKER_IP = "localhost";
+    private static final String TRACKER_IP = "52.5.152.108";
     private static final String TRACKER_NAME = "Tracker";
     private static final int TRACKER_PORT = 6666;
 
@@ -67,7 +68,7 @@ public class Peer implements PeerInterface {
             file.read(fileBytes);
 
             String s = new String(fileBytes);
-            print("File bytes: " + s);
+            // print("File bytes: " + s);
             file.close();
             return fileBytes;
 
@@ -305,13 +306,13 @@ public class Peer implements PeerInterface {
         int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
 
-        System.out.print("LIST NUMS: ");
-        for (int i = 0; i < numPieces; i++) {
-            numsInList[i] = pieceBreakdown.get(i).size();
-            indexArray[i] = i;
-            System.out.print(numsInList[i] + ", ");
-        }
-        System.out.println();
+        // System.out.print("LIST NUMS: ");
+        // for (int i = 0; i < numPieces; i++) {
+        //     numsInList[i] = pieceBreakdown.get(i).size();
+        //     indexArray[i] = i;
+        //     System.out.print(numsInList[i] + ", ");
+        // }
+        // System.out.println();
 
         // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
         for (int i = 0; i < numPieces; i++) {
@@ -328,11 +329,11 @@ public class Peer implements PeerInterface {
             }
         }
 
-        System.out.print("AFTER: ");
-        for (int i = 0; i < numPieces; i++) {
-            System.out.print(indexArray[i] + ", ");
-        }
-        System.out.println();
+        // System.out.print("AFTER: ");
+        // for (int i = 0; i < numPieces; i++) {
+        //     System.out.print(indexArray[i] + ", ");
+        // }
+        // System.out.println();
 
         return indexArray;
     }
@@ -363,6 +364,7 @@ public class Peer implements PeerInterface {
             int counter = -1;
 
             int reAskTrackerForPiece = -1;
+            int continueCounter = 0;
 
             // myFiles.get(fileName).printLists();
             while (!myFiles.get(fileName).getPiecesNeeded().isEmpty() ||
@@ -373,11 +375,13 @@ public class Peer implements PeerInterface {
                 int currentPiece = indexArray[counter];     // local variable for readability 
 
                 if (!myFiles.get(fileName).needsPiece(currentPiece)) {
-                    System.out.println("continues");
+                    // System.out.println("continues");
                     continue; // I am already processing this piece
                 }
 
-                if (pieceBreakdown.get(currentPiece).isEmpty()) {
+                if (pieceBreakdown.get(currentPiece).isEmpty() || continueCounter>=10) {
+                    System.out.println("TRYING TO RE-REQUEST");
+                    if (continueCounter >= 10) { continueCounter = 0; }
                     if (reAskTrackerForPiece != -1){
                         System.out.println("Nobody has piece " + currentPiece + " so I am not downloading file!");
                         return;
@@ -392,6 +396,8 @@ public class Peer implements PeerInterface {
                     pieceBreakdown.clear();
                     pieceBreakdown.addAll(getFilePieces(fileName, numPieces, peersWithFile));
 
+                    printDoubleList(pieceBreakdown);
+
                     // resort "rarest first" array
                     System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
                 }
@@ -400,7 +406,8 @@ public class Peer implements PeerInterface {
                     String peerName = pieceBreakdown.get(currentPiece).get(indexOfPeerName);
 
                     if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(peerName)) {
-                        System.out.println("Continue part 2");
+                        continueCounter++;
+                        // System.out.println("Continue part 2");
                         continue;   // don't want to download from someone we are already downloading from
                     }
                     //otherwise download from k:
@@ -428,7 +435,7 @@ public class Peer implements PeerInterface {
         try {
             System.out.println("Wryting bytes");
             String s = new String(data);
-            System.out.println(s);
+            // System.out.println(s);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
             fileName.seek(offset);
@@ -504,15 +511,15 @@ public class Peer implements PeerInterface {
     seed <file name>
     */
 	public static void main(String[] argv) {
-        String host = (argv.length < 1) ? "localhost" : argv[0];
+        myHost = (argv.length < 1) ? "localhost" : argv[0];
         myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
         myName = (argv.length < 3) ? "Howard" : (argv[2]);
 
-        try {
-            myHost = InetAddress.getLocalHost().getHostAddress();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // try {
+        //     myHost = InetAddress.getLocalHost().getHostAddress();
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
         
         System.out.println("My portnum: " + myPortNum + "\nMy name: " + myName + "\nMy host: " + myHost + "\n");
 
@@ -554,7 +561,7 @@ public class Peer implements PeerInterface {
                 byte[] answer = new byte[sizeOfThisPiece];
                 System.arraycopy(askForFilePiece(peerName, fileName, currentPiece), 0, answer, 0, sizeOfThisPiece);
 
-                System.out.println("Anaswer = " + answer);
+                // System.out.println("Anaswer = " + answer);
 
                 if (answer == null) {
                     myFiles.get(fileName).noLongerDownloadingPiece(currentPiece, peerName);

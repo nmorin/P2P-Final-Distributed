@@ -67,14 +67,14 @@ public class PeerFile {
 	}
 
 	public void startDownloadingPiece(int pieceNum, String peerName) {
-		System.out.println("Needed pieces before:");
-		printIList(neededPieces, "neededPieces");
+		// System.out.println("Needed pieces before:");
+		// printIList(neededPieces, "neededPiecesm");
 		fileBitPieces[pieceNum] = DOWNLOADING;
 		neededPieces.remove((Integer)pieceNum);
 		downloadingPieces.add((Integer)pieceNum);
 		currentlyDownloadingFrom.add(peerName);
-		System.out.println("removed piece. Here is neededPieces now:");
-		printIList(neededPieces, "neededPieces");
+		// System.out.println("removed piece. Here is neededPieces now:");
+		// printIList(neededPieces, "neededPieces");
 	}
  
  	public void noLongerDownloadingPiece(int pieceNum, String peerName) {
