@@ -31,9 +31,9 @@ public class Peer implements PeerInterface {
     private static final int PIECE_SIZE = 180;
 
     private static boolean alreadyConnectedToTracker = false;
-    // private static final String TRACKER_IP = "localhost";
+    private static final String TRACKER_IP = "localhost";
     // private static final String TRACKER_IP = "52.5.152.108";    // Virginia, 1
-    private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
+    // private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
     
     private static final String TRACKER_NAME = "Tracker";
     private static final int TRACKER_PORT = 6666;
