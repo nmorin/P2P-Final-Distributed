@@ -6,15 +6,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.*;
-import java.net.InetAddress;
 
 import java.util.Scanner;
 import java.util.Random;
 import java.util.*;
 import java.util.ArrayList.*;
+import java.util.Timer;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.InetAddress;
 
 import java.rmi.*;
 import java.rmi.registry.Registry;
@@ -31,9 +32,9 @@ public class Peer implements PeerInterface {
     private static final int PIECE_SIZE = 180;
 
     private static boolean alreadyConnectedToTracker = false;
-    // private static final String TRACKER_IP = "localhost";
+    private static final String TRACKER_IP = "52.11.50.220";
     // private static final String TRACKER_IP = "52.5.152.108";    // Virginia, 1
-    private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
+    // private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
     
     private static final String TRACKER_NAME = "Tracker";
     private static final int TRACKER_PORT = 6666;
@@ -311,13 +312,11 @@ public class Peer implements PeerInterface {
         int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
 
-        // System.out.print("LIST NUMS: ");
         for (int i = 0; i < numPieces; i++) {
             numsInList[i] = pieceBreakdown.get(i).size();
             indexArray[i] = i;
             // System.out.print(indexArray[i] + ", ");
         }
-        // System.out.println();
 
         // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
         for (int i = 0; i < numPieces; i++) {
@@ -333,8 +332,6 @@ public class Peer implements PeerInterface {
                 }
             }
         }
-
-
 
         // System.out.print("AFTER: ");
         // for (int i = 0; i < numPieces; i++) {
