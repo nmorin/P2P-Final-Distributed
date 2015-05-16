@@ -51,20 +51,13 @@ public class Peer implements PeerInterface {
 
     public byte[] requestFile(String fileName, int piece) {
         try {
-            byte[] fileBytes;
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
             int size = myFiles.get(fileName).getSize();
             int numPieces = myFiles.get(fileName).getNumPieces();
 
             int offset = piece * PIECE_SIZE;
-            int amountToRead;
-            if (offset + PIECE_SIZE > size) {
-                amountToRead = size - offset;
-                fileBytes = new byte[amountToRead];
-            } else { 
-                amountToRead = PIECE_SIZE;
-                fileBytes = new byte[PIECE_SIZE];
-            }
+            int amountToRead = getThisPieceSize(myFiles.get(fileName).getNumPieces());
+            byte[] fileBytes = new byte[amountToRead];
 
             print("Length: " + size + " Piece size:" + PIECE_SIZE);
             print("Numpieces: " + numPieces + " Offset: " + offset);
@@ -82,6 +75,13 @@ public class Peer implements PeerInterface {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private int getThisPieceSize(PeerFile file, int pieceNum) {
+        if ((pieceNum+1)*PIECE_SIZE > file.getSize()) {
+            return file.getSize() - offset;
+        }
+        return PIECE_SIZE;
     }
 
     /* Returns a list of the pieces this peer has of the specified file */
@@ -277,7 +277,9 @@ public class Peer implements PeerInterface {
                     pieceBreakdown.get((int)piece).add(peerName);
                 }
             }
+
             return pieceBreakdown;
+
         } catch (Exception e) {
             System.out.println("Exception in 'getFilePieces'");
             e.printStackTrace();
@@ -285,41 +287,103 @@ public class Peer implements PeerInterface {
         return null;
     }
 
+ 
+// public static Comparator<ArrayList<String>> StringListComparator 
+//                           = new Comparator<ArrayList<String>>() {
+ 
+//     public int compare(ArrayList<String> element1, ArrayList<String> element2) {
+    
+//         int size1 = element1.getSize(); 
+//         int size2 = element2.getSize();
+
+//         //ascending order
+//         return size1 - size2;
+ 
+//         //descending order
+//         //return size2 - size1;
+//     }
+ 
+// };
+
+    private static int[] sortArrayOfIndices(int numPieces) {
+        int indexArray = new int[numPieces];
+        // TODO: this is just so we have indices in the array, this is not correctly 'sorted'
+        for (int i = 0; i < numPieces; i++) {
+            indexArray[i] = i;
+        }
+
+        return indexArray;
+    }
+
     private static void downloadFile(String fileName, ArrayList<ArrayList<String>> pieceBreakdown) {
         try {
+
+            // get count in piece breakdown
+            // get sorted list
+            // have array of indices: {2, 3, 1, 5, 4, 0} says 2 has the least, 3 second least
+            //              array is called indexArray
+            // get min
+            // get list
+            // if peer list at index = null, re-ask tracker, reinit stuff, resort
+            // else:
+            // find a peer in list: not being downloaded from
+            //      'start downloaindg' that piece from that peer
+            //      if finish downloading: 'finish downloading'                
+            //
+
             RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
+            int numPieces = myFiles.get(fileName).getNumPieces();
+            int indexArray = new int[numPieces];
+
+            // copies into index array sortex indices
+            System.arraycopy(sortArrayOfIndices(numPieces), 0, indexArray, 0, numPieces);
 
             // Iterate through pieces and request them
             int counter = -1;
-            for (ArrayList<String> peersWhoHavePiece : pieceBreakdown) {
+
+            while (myFiles.get(fileName).getPiecesNeeded() != null &&
+                   myFiles.get(fileName).getDownloadingPieces() != null) {
+
                 counter++;
+                if (counter >= numPieces) { counter = 0; } // this ensures we continuously loop through the indices of the index array
 
-                // always should have the "placeholder" in position 0, so start with 1
-                if (peersWhoHavePiece.size() < 1) {
-                    System.out.println("NO PERSON HAS PIECE " + counter + " FOR FILE "+fileName);
-                    continue;
+                if (!myFiles.get(fileName).needsPiece(indexArray[counter])) {
+                    break; // I am already processing this piece
                 }
 
-                print("REQUEST");
-
-                // temp testing just go with the first peer in the list:
-                byte[] answer = askForFilePiece(peersWhoHavePiece.get(0), fileName, counter);
-                if (answer == null) {
-                    // Request unsuccesful; handle here
-                } else {
-                    myFiles.get(fileName).finishedDownloadingPiece(counter);
-                    writeBytes(answer, outFile, counter);
+                if (pieceBreakdown.get(indexArray[counter]) == null) {
+                    //re-ask tracker, reinit stuff, resort
                 }
-                
+
+                for (int k = 0; k < pieceBreakdown.get(indexArray[counter]).size(); k++) {
+                    if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(pieceBreakdown.get(indexArray[counter]).get(k))) {
+                        continue;   // don't want to download from someone we are already downloading from
+                    }
+                    //otherwise download from k:
+                    myFiles.get(fileName).startDownloadingPiece(indexArray[counter], pieceBreakdown.get(indexArray[counter]).get(k));
+                    int sizeOfThisPiece = getThisPieceSize(fileName, indexArray[counter]);
+
+                    byte[] answer = new byte[sizeOfThisPiece];
+                    System.arraycopy(askForFilePiece(pieceBreakdown.get(indexArray[counter]).get(k), fileName, indexArray[counter]), 0, answer, 0, sizeOfThisPiece);
+
+                    if (answer == null) {
+                        // Request unsuccesful; handle here
+
+                        myFiles.get(fileName).noLongerDownloadingPiece(indexArray[counter], pieceBreakdown.get(indexArray[counter]).get(k));
+                    } else {
+                        myFiles.get(fileName).finishedDownloadingPiece(indexArray[counter], pieceBreakdown.get(indexArray[counter]).get(k));
+                        writeBytes(answer, outFile, counter);
+                    }
+                }
             }
 
             outFile.close();
+
         } catch (Exception e) {
             System.out.println("Exception in 'downloadFile'");
             e.printStackTrace();
         }
     }
-
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece) {
         try {
