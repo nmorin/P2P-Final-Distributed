@@ -12,6 +12,8 @@ import java.util.Random;
 import java.util.*;
 import java.util.ArrayList.*;
 import java.util.Timer;
+import java.util.concurrent.*;
+import java.util.concurrent.TimeoutException;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -28,11 +30,12 @@ public class Peer implements PeerInterface {
     private static String myHost;
     private static int myPortNum;
     private static boolean rareTest = false;
+    private static Timer timer;
 
     private static final int PIECE_SIZE = 180;
 
     private static boolean alreadyConnectedToTracker = false;
-    private static final String TRACKER_IP = "52.11.50.220";
+    private static final String TRACKER_IP = "localhost";
     // private static final String TRACKER_IP = "52.5.152.108";    // Virginia, 1
     // private static final String TRACKER_IP = "52.7.97.172";     // Virginia, 2
     
@@ -206,10 +209,31 @@ public class Peer implements PeerInterface {
      * Based on what 
      */
     private static void makeRequest(String fileName) {
+        long startTime = System.nanoTime();
         try {
             connectToTracker();
+            ArrayList<String> peersWithFile;
+            // peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
 
-            ArrayList<String> peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
+
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Future<Object> future = executor.submit(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                    ArrayList<String> tryPeersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
+                    return tryPeersWithFile;
+                }
+            });
+            try {
+                peersWithFile = (ArrayList<String>) future.get(5, TimeUnit.SECONDS); //timeout is in 5 seconds
+            } catch (TimeoutException e) {
+                peersWithFile = null;
+                print("Timeout occured trying to query the tracker; request fails");
+
+            }
+            executor.shutdownNow();
+
+
 
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
@@ -247,6 +271,9 @@ public class Peer implements PeerInterface {
             System.out.println("Exception in placing request");
             e.printStackTrace();
         }
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime) / 1000000;
+        print("REQUEST FOR + " + fileName + " TOOK: " + duration + " MILLISECONDS");
     }
 
     private static ArrayList<ArrayList<String>> getFilePieces(String fileName, int numFilePieces, ArrayList<String> peersWithFile){
@@ -519,6 +546,8 @@ public class Peer implements PeerInterface {
         myHost = (argv.length < 1) ? "localhost" : argv[0];
         myPortNum = (argv.length < 2) ? 5000 : Integer.parseInt(argv[1]);
         myName = (argv.length < 3) ? "Howard" : (argv[2]);
+
+        timer = new Timer();
 
         // try {
         //     myHost = InetAddress.getLocalHost().getHostAddress();
