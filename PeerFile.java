@@ -3,7 +3,6 @@ import java.util.*;
 public class PeerFile {
 
 	private static String fileName;
-	private static ArrayList<String> peersWithFile;
 	private static int numPieces;
 	private static ArrayList<Integer> completePieces;
 	private static ArrayList<Integer> downloadingPieces;
@@ -16,8 +15,6 @@ public class PeerFile {
 		this.fileName = fileName;
 		this.size = size;
 		this.numPieces = numPieces;
-		// this.peersWithFile = new ArrayList<String>();
-		// this.peersWithFile.addAll(peersWithFile);
 		this.completePieces = new ArrayList<Integer>();
 		this.neededPieces = new ArrayList<Integer>();
 		fileBitPieces = new int[numPieces];
@@ -38,8 +35,6 @@ public class PeerFile {
 	public ArrayList<Integer> getPiecesNeeded() { return neededPieces; }
 
 	public ArrayList<Integer> getCompletePieces() { return completePieces; }
-
-	public ArrayList<String> getPeerList() { return peersWithFile; }
 
 	public int getPieceValue(int pieceNum) { return fileBitPieces[pieceNum]; }
 

@@ -405,7 +405,7 @@ public class Peer implements PeerInterface {
             e.printStackTrace();
         }
         
-        System.out.println("My portnum: " + myPortNum + "\n My name: " + myName + "\n");
+        System.out.println("My portnum: " + myPortNum + "\nMy name: " + myName + "\nMy host: " + myHost + "\n");
 
         createAndBindSelf();
         parseInput();
