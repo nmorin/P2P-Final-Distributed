@@ -427,7 +427,7 @@ public class Peer implements PeerInterface {
         try {
             System.out.println("Wryting bytes");
             String s = new String(data);
-            // System.out.println(s);
+            System.out.println(s);
             // first get offset with piece:
             int offset = piece * PIECE_SIZE;
             fileName.seek(offset);
