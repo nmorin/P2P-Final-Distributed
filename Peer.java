@@ -70,7 +70,7 @@ public class Peer implements PeerInterface {
             // print("Length: " + size + " Piece size:" + PIECE_SIZE);
             // print("Numpieces: " + numPieces + " Offset: " + offset);
             // print("amountToRead: " + amountToRead);
-            print("\nGiving away " + fileName);
+            // print("\nGiving away " + fileName);
 
             file.seek((long) offset);
             file.read(fileBytes);
@@ -238,7 +238,7 @@ public class Peer implements PeerInterface {
 
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
-                System.out.println("Found peer list!");
+                // System.out.println("Found peer list!");
                 fileSize = Integer.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
 
@@ -261,7 +261,7 @@ public class Peer implements PeerInterface {
             // The elements of the inner array lists are peer information of peers with that pieces
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             pieceBreakdown.addAll(getFilePieces(fileName, numFilePieces, peersWithFile));
-            System.out.println("Broke down pieces!");
+            // System.out.println("Broke down pieces!");
 
             // printDoubleList(pieceBreakdown);
 
@@ -269,7 +269,7 @@ public class Peer implements PeerInterface {
             downloadFile(fileName, pieceBreakdown);
             long endDownloadTime = System.nanoTime();
             long downloadDuration = (endDownloadTime - startDownloadTime) / 1000000;
-            print("DOWNLOADING " + fileName + " TOOK: " + downloadDuration + " MILLISECONDS");
+            print("\nDOWNLOADING " + fileName + " TOOK: " + downloadDuration + " MILLISECONDS");
 
 
         } catch (Exception e) {
@@ -278,7 +278,7 @@ public class Peer implements PeerInterface {
         }
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
-        print("TOTAL REQUEST FOR " + fileName + " TOOK: " + duration + " MILLISECONDS");
+        print("\nTOTAL REQUEST FOR " + fileName + " TOOK: " + duration + " MILLISECONDS");
     }
 
     private static ArrayList<ArrayList<String>> getFilePieces(String fileName, int numFilePieces, ArrayList<String> peersWithFile){
@@ -492,7 +492,7 @@ public class Peer implements PeerInterface {
 
     private static void writeBytes(byte[] data, RandomAccessFile fileName, int piece, String peerName, String fileString) {
         try {
-            System.out.println("Wryting bytes");
+            // System.out.println("Wryting bytes");
             String s = new String(data);
             // System.out.println(s);
             // first get offset with piece:
@@ -519,7 +519,7 @@ public class Peer implements PeerInterface {
      * peer end to make sure this information is correct.
      */
     private static byte[] askForFilePiece(String peerName, String fileName, int piece) {
-        print("I, " + myName + " am requesting " + fileName + " frm " + peerName + "\n");
+        // print("I, " + myName + " am requesting " + fileName + " frm " + peerName + "\n");
         try {
             byte[] answer = peerStubs.get(peerName).requestFile(fileName, piece);
             return answer;
