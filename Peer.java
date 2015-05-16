@@ -214,25 +214,25 @@ public class Peer implements PeerInterface {
         try {
             connectToTracker();
             ArrayList<String> peersWithFile;
-            // peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
+            peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
 
 
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Future<Object> future = executor.submit(new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                    ArrayList<String> tryPeersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
-                    return tryPeersWithFile;
-                }
-            });
-            try {
-                peersWithFile = (ArrayList<String>) future.get(5, TimeUnit.SECONDS); //timeout is in 5 seconds
-            } catch (TimeoutException e) {
-                peersWithFile = null;
-                print("Timeout occured trying to query the tracker; request fails");
+            // ExecutorService executor = Executors.newSingleThreadExecutor();
+            // Future<Object> future = executor.submit(new Callable<Object>() {
+            //     @Override
+            //     public Object call() throws Exception {
+            //         ArrayList<String> tryPeersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
+            //         return tryPeersWithFile;
+            //     }
+            // });
+            // try {
+            //     peersWithFile = (ArrayList<String>) future.get(5, TimeUnit.SECONDS); //timeout is in 5 seconds
+            // } catch (TimeoutException e) {
+            //     peersWithFile = null;
+            //     print("Timeout occured trying to query the tracker; request fails");
 
-            }
-            executor.shutdownNow();
+            // }
+            // executor.shutdownNow();
 
 
 
@@ -265,7 +265,11 @@ public class Peer implements PeerInterface {
 
             // printDoubleList(pieceBreakdown);
 
+            long startDownloadTime = System.nanoTime();
             downloadFile(fileName, pieceBreakdown);
+            long endDownloadTime = System.nanoTime();
+            long downloadDuration = (endDownloadTime - startDownloadTime) / 1000000;
+            print("DOWNLOADING " + fileName + " TOOK: " + downloadDuration + " MILLISECONDS");
 
 
         } catch (Exception e) {
@@ -274,7 +278,7 @@ public class Peer implements PeerInterface {
         }
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
-        print("REQUEST FOR + " + fileName + " TOOK: " + duration + " MILLISECONDS");
+        print("TOTAL REQUEST FOR " + fileName + " TOOK: " + duration + " MILLISECONDS");
     }
 
     private static ArrayList<ArrayList<String>> getFilePieces(String fileName, int numFilePieces, ArrayList<String> peersWithFile){
