@@ -373,7 +373,7 @@ public class Peer implements PeerInterface {
                 int currentPiece = indexArray[counter];     // local variable for readability 
 
                 if (!myFiles.get(fileName).needsPiece(currentPiece)) {
-                    System.out.println("continues");
+                    // System.out.println("continues");
                     continue; // I am already processing this piece
                 }
 
@@ -400,7 +400,7 @@ public class Peer implements PeerInterface {
                     String peerName = pieceBreakdown.get(currentPiece).get(indexOfPeerName);
 
                     if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(peerName)) {
-                        System.out.println("Continue part 2");
+                        // System.out.println("Continue part 2");
                         continue;   // don't want to download from someone we are already downloading from
                     }
                     //otherwise download from k:
