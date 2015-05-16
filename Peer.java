@@ -369,8 +369,8 @@ public class Peer implements PeerInterface {
                     System.out.println("TRYING TO RE-REQUEST");
                     if (continueCounter >= 10) { continueCounter = 0; }
                     else { reAskTrackerForPiece = currentPiece; }
-                    
-                    if (reAskTrackerForPiece != -1){
+
+                    if (reAskTrackerForPiece == currentPiece){
                         System.out.println("Nobody has piece " + currentPiece + " so I am not downloading file!");
                         return;
                     }
