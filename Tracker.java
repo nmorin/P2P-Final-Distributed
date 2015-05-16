@@ -32,6 +32,7 @@ public class Tracker implements TrackerInterface {
 	public void seedFile(String fileName, String peerName, int peerPort, String host, int fileSize, int numPieces) {
 		if (trackerFiles.containsKey(fileName)) { 
 			System.out.println("A file by that name is already in tracker's database");
+			trackerFiles.get(fileName).addPeer(peerName, peerPort, host);
 			return; 
 		}
 		TrackerFile temp = new TrackerFile(fileName, peerName, peerPort, host, fileSize, numPieces);

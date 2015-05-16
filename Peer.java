@@ -26,6 +26,7 @@ public class Peer implements PeerInterface {
     private static String myName;
     private static String myHost;
     private static int myPortNum;
+    private static boolean rareTest = false;
 
     private static final int PIECE_SIZE = 180;
 
@@ -238,6 +239,7 @@ public class Peer implements PeerInterface {
 
             downloadFile(fileName, pieceBreakdown);
 
+
         } catch (Exception e) {
             System.out.println("Exception in placing request");
             e.printStackTrace();
@@ -283,24 +285,6 @@ public class Peer implements PeerInterface {
         }
         return null;
     }
-
- 
-// public static Comparator<ArrayList<String>> StringListComparator 
-//                           = new Comparator<ArrayList<String>>() {
- 
-//     public int compare(ArrayList<String> element1, ArrayList<String> element2) {
-    
-//         int size1 = element1.getSize(); 
-//         int size2 = element2.getSize();
-
-//         //ascending order
-//         return size1 - size2;
- 
-//         //descending order
-//         //return size2 - size1;
-//     }
- 
-// };
 
     private static int[] sortArrayOfIndices(int numPieces, ArrayList<ArrayList<String>> pieceBreakdown) {
         int[] numsInList = new int[numPieces];
@@ -415,15 +399,20 @@ public class Peer implements PeerInterface {
                     int sizeOfThisPiece = getThisPieceSize(myFiles.get(fileName), currentPiece);
                     System.out.println("size of this piece = " + sizeOfThisPiece);
 
+                    if (rareTest && myFiles.get(fileName).getNumComplete() > numPieces/2) {
+                        break;
+                    }
+
                     print("Making a thread, oh god....");
                     ConcurrentPieceRequest newPieceRequest = new ConcurrentPieceRequest(fileName, peerName, currentPiece, sizeOfThisPiece, outFile);
                     newPieceRequest.start();
                 }
-
-
+                if (rareTest && myFiles.get(fileName).getNumComplete() >= numPieces/2) {
+                    break;
+                }
             }
 
-            // outFile.close();
+            
 
         } catch (Exception e) {
             System.out.println("Exception in 'downloadFile'");
@@ -488,6 +477,17 @@ public class Peer implements PeerInterface {
                 seedFile(name);
             }
 
+            // Initiates a peer with only every other piece of a file
+            else if (parsedRequest[0].equals("rare")) {
+                rareTest = true;
+                fileName = parsedRequest[1];
+                makeRequest(fileName);
+
+                print("------- Rare Piece State -------");
+                myFiles.get(fileName).printLists();
+                print("------- Rare Piece State -------");
+            }
+
             // Request a file frm peer directly
             else if (parsedRequest[0].equals("request")) {
                 fileName = parsedRequest[1];
@@ -528,13 +528,6 @@ public class Peer implements PeerInterface {
     }
 
 
-
-
-
-
-
-
-
     /* Class used to run multiple concurrent threads, when calculating
      * the time it takes for each request. */
     private static class ConcurrentPieceRequest extends Thread {
@@ -557,10 +550,8 @@ public class Peer implements PeerInterface {
         public void run() {
 
             try {
-                print("INside thread, mother of god");
                 byte[] answer = new byte[sizeOfThisPiece];
                 System.arraycopy(askForFilePiece(peerName, fileName, currentPiece), 0, answer, 0, sizeOfThisPiece);
-
                 // System.out.println("Anaswer = " + answer);
 
                 if (answer == null) {
@@ -568,7 +559,6 @@ public class Peer implements PeerInterface {
                 } else {
                     myFiles.get(fileName).finishedDownloadingPiece(currentPiece, peerName);
                     writeBytes(answer, outFile, currentPiece);
-                    print("has it owrked???");
                 }
 
             } catch (Exception e) {

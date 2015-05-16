@@ -45,6 +45,8 @@ public class PeerFile {
 
 	public ArrayList<Integer> getCompletePieces() { return completePieces; }
 
+	public int getNumComplete() { return completePieces.size(); }
+
 	public ArrayList<Integer> getDownloadingPieces() { return downloadingPieces; }
 
 	public int getPieceValue(int pieceNum) { return fileBitPieces[pieceNum]; }
@@ -92,17 +94,20 @@ public class PeerFile {
  	}
 
 	private void printSList(ArrayList<String> list, String name) {
-		System.out.println(name + ": ");
+		System.out.print(name + ": ");
 		for (String elem : list) {
 			System.out.print(elem + ", ");
 		}
+		System.out.println("\n");
 	}
 
 	private void printIList(ArrayList<Integer> list, String name) {
-		System.out.println(name + ": ");
+		System.out.print(name + ": ");
 		for (Integer elem : list) {
 			System.out.print(elem + ", ");
 		}
+		System.out.println("\n");
+
 	}
 }
 
