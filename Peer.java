@@ -292,13 +292,13 @@ public class Peer implements PeerInterface {
         int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
 
-        // System.out.print("LIST NUMS: ");
-        // for (int i = 0; i < numPieces; i++) {
-        //     numsInList[i] = pieceBreakdown.get(i).size();
-        //     indexArray[i] = i;
-        //     System.out.print(numsInList[i] + ", ");
-        // }
-        // System.out.println();
+        System.out.print("LIST NUMS: ");
+        for (int i = 0; i < numPieces; i++) {
+            numsInList[i] = pieceBreakdown.get(i).size();
+            indexArray[i] = i;
+            System.out.print(numsInList[i] + ", ");
+        }
+        System.out.println();
 
         // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
         for (int i = 0; i < numPieces; i++) {
@@ -315,11 +315,11 @@ public class Peer implements PeerInterface {
             }
         }
 
-        // System.out.print("AFTER: ");
-        // for (int i = 0; i < numPieces; i++) {
-        //     System.out.print(indexArray[i] + ", ");
-        // }
-        // System.out.println();
+        System.out.print("AFTER: ");
+        for (int i = 0; i < numPieces; i++) {
+            System.out.print(indexArray[i] + ", ");
+        }
+        System.out.println();
 
         return indexArray;
     }
