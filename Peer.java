@@ -535,19 +535,15 @@ public class Peer implements PeerInterface {
     private static void parseInput() {
         Scanner keyboard = new Scanner(System.in);
         String fileName = "YOLO.txt";
-        
-        while (true) {
+
+        while (true && keyboard.hasNextLine()) {
             System.out.println("Enter a command");
+            // if (keyboard.nextLine() == null) { 
+            //     print("why");
+            //     break; }
             String command = keyboard.nextLine();
             String parsedRequest[] = command.split(" ");
             String secondPartOfRequest = "";
-
-            // Add a peer
-            // if (parsedRequest[0].equals("connect")) {
-            //     String name = parsedRequest[1];
-            //     int port = Integer.parseInt(parsedRequest[2]);
-            //     connectToPeer(name, port,);
-            // }
 
             // Seed a file
             if (parsedRequest[0].equals("seed")) {
