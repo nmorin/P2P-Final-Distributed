@@ -362,6 +362,8 @@ public class Peer implements PeerInterface {
             // Iterate through pieces and request them
             int counter = -1;
 
+            int reAskTrackerForPiece = -1;
+
             // myFiles.get(fileName).printLists();
             while (!myFiles.get(fileName).getPiecesNeeded().isEmpty() ||
                    !myFiles.get(fileName).getDownloadingPieces().isEmpty()) {
@@ -375,11 +377,23 @@ public class Peer implements PeerInterface {
                     continue; // I am already processing this piece
                 }
 
-                if (pieceBreakdown.get(currentPiece) == null) {
-                    System.out.println("Nobody has piece " + currentPiece + " so I am not downloading file!");
-                    return;
-                    // re-ask tracker, reinit stuff, resort
-                    // if null, means there are no peers that have that piece of the file
+                if (pieceBreakdown.get(currentPiece).isEmpty()) {
+                    if (reAskTrackerForPiece != -1){
+                        System.out.println("Nobody has piece " + currentPiece + " so I am not downloading file!");
+                        return;
+                    }
+
+                    // re-ask tracker for list of peers
+                    ArrayList<String> peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
+                    if (peersWithFile != null) { peersWithFile.remove(0); } // first index is file size
+                    else { return; }
+
+                    reAskTrackerForPiece = currentPiece;
+                    pieceBreakdown.clear();
+                    pieceBreakdown.addAll(getFilePieces(fileName, numPieces, peersWithFile));
+
+                    // resort "rarest first" array
+                    System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
                 }
 
                 for (int indexOfPeerName = 0; indexOfPeerName < pieceBreakdown.get(currentPiece).size(); indexOfPeerName++) {
