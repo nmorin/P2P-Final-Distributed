@@ -79,7 +79,7 @@ public class Peer implements PeerInterface {
 
     private static int getThisPieceSize(PeerFile file, int pieceNum) {
         if ((pieceNum+1)*PIECE_SIZE > file.getSize()) {
-            return (pieceNum+1)*PIECE_SIZE - file.getSize();
+            return file.getSize() - (pieceNum)*PIECE_SIZE ;
         }
         return PIECE_SIZE;
     }
