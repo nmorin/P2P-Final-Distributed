@@ -368,6 +368,8 @@ public class Peer implements PeerInterface {
                 if (pieceBreakdown.get(currentPiece).isEmpty() || continueCounter>=10) {
                     System.out.println("TRYING TO RE-REQUEST");
                     if (continueCounter >= 10) { continueCounter = 0; }
+                    else { reAskTrackerForPiece = currentPiece; }
+                    
                     if (reAskTrackerForPiece != -1){
                         System.out.println("Nobody has piece " + currentPiece + " so I am not downloading file!");
                         return;
@@ -378,7 +380,6 @@ public class Peer implements PeerInterface {
                     if (peersWithFile != null) { peersWithFile.remove(0); } // first index is file size
                     else { return; }
 
-                    reAskTrackerForPiece = currentPiece;
                     pieceBreakdown.clear();
                     pieceBreakdown.addAll(getFilePieces(fileName, numPieces, peersWithFile));
 
