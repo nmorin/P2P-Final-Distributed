@@ -45,6 +45,8 @@ public class PeerFile {
 
 	public ArrayList<Integer> getCompletePieces() { return completePieces; }
 
+	public int getNumComplete() { return completePieces.size(); }
+
 	public ArrayList<Integer> getDownloadingPieces() { return downloadingPieces; }
 
 	public int getPieceValue(int pieceNum) { return fileBitPieces[pieceNum]; }
