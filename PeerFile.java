@@ -22,6 +22,8 @@ public class PeerFile {
 		this.numPieces = numPieces;
 		this.completePieces = new ArrayList<Integer>();
 		this.neededPieces = new ArrayList<Integer>();
+		this.downloadingPieces = new ArrayList<Integer>();
+		this.currentlyDownloadingFrom = new ArrayList<String>();
 		fileBitPieces = new int[numPieces];
 		if (downloadingFile) {
 			for (int i = 0; i < numPieces; i++) {
@@ -66,13 +68,13 @@ public class PeerFile {
 
 	public void startDownloadingPiece(int pieceNum, String peerName) {
 		System.out.println("Needed pieces before:");
-		printIList(neededPieces);
+		printIList(neededPieces, "neededPieces");
 		fileBitPieces[pieceNum] = DOWNLOADING;
 		neededPieces.remove((Integer)pieceNum);
 		downloadingPieces.add((Integer)pieceNum);
 		currentlyDownloadingFrom.add(peerName);
 		System.out.println("removed piece. Here is neededPieces now:");
-		printIList(neededPieces);
+		printIList(neededPieces, "neededPieces");
 	}
  
  	public void noLongerDownloadingPiece(int pieceNum, String peerName) {
@@ -82,15 +84,22 @@ public class PeerFile {
 		currentlyDownloadingFrom.remove(peerName);
  	}
 
-	private void printSList(ArrayList<String> list) {
-		System.out.println("My list: ");
+ 	public void printLists() {
+ 		printSList(currentlyDownloadingFrom, "currentDownloadingFrom");
+ 		printIList(neededPieces, "neededPieces");
+ 		printIList(completePieces, "completePieces");
+ 		printIList(downloadingPieces, "downloadingPieces");
+ 	}
+
+	private void printSList(ArrayList<String> list, String name) {
+		System.out.println(name + ": ");
 		for (String elem : list) {
 			System.out.print(elem + ", ");
 		}
 	}
 
-	private void printIList(ArrayList<Integer> list) {
-		System.out.println("My list: ");
+	private void printIList(ArrayList<Integer> list, String name) {
+		System.out.println(name + ": ");
 		for (Integer elem : list) {
 			System.out.print(elem + ", ");
 		}

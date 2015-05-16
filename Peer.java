@@ -79,7 +79,7 @@ public class Peer implements PeerInterface {
 
     private static int getThisPieceSize(PeerFile file, int pieceNum) {
         if ((pieceNum+1)*PIECE_SIZE > file.getSize()) {
-            return file.getSize() - (pieceNum+1)*PIECE_SIZE;
+            return (pieceNum+1)*PIECE_SIZE - file.getSize();
         }
         return PIECE_SIZE;
     }
@@ -262,7 +262,7 @@ public class Peer implements PeerInterface {
 
                 String peerName = peerInfo.substring(0, colonIndex);
                 String portNo = peerInfo.substring(colonIndex+1, semiColonIndex);
-                String host = peerInfo.substring(colonIndex+1, peerInfo.length());
+                String host = peerInfo.substring(semiColonIndex+1, peerInfo.length());
                 connectToPeer(peerName, Integer.parseInt(portNo), host); //establishes connections
 
                 if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
@@ -363,14 +363,17 @@ public class Peer implements PeerInterface {
             // Iterate through pieces and request them
             int counter = -1;
 
-            while (myFiles.get(fileName).getPiecesNeeded() != null &&
-                   myFiles.get(fileName).getDownloadingPieces() != null) {
+            myFiles.get(fileName).printLists();
+
+            while (!myFiles.get(fileName).getPiecesNeeded().isEmpty() ||
+                   !myFiles.get(fileName).getDownloadingPieces().isEmpty()) {
 
                 counter++;
                 if (counter >= numPieces) { counter = 0; } // this ensures we continuously loop through the indices of the index array
                 int currentPiece = indexArray[counter];     // local variable for readability 
 
                 if (!myFiles.get(fileName).needsPiece(currentPiece)) {
+                    System.out.println("continues");
                     continue; // I am already processing this piece
                 }
 
@@ -383,14 +386,18 @@ public class Peer implements PeerInterface {
 
                 for (int indexOfPeerName = 0; indexOfPeerName < pieceBreakdown.get(currentPiece).size(); indexOfPeerName++) {
                     if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(pieceBreakdown.get(currentPiece).get(indexOfPeerName))) {
+                        System.out.println("Continue part 2");
                         continue;   // don't want to download from someone we are already downloading from
                     }
                     //otherwise download from k:
                     myFiles.get(fileName).startDownloadingPiece(currentPiece, pieceBreakdown.get(currentPiece).get(indexOfPeerName));
                     int sizeOfThisPiece = getThisPieceSize(myFiles.get(fileName), currentPiece);
+                    System.out.println("size of this piece = " + sizeOfThisPiece);
 
                     byte[] answer = new byte[sizeOfThisPiece];
                     System.arraycopy(askForFilePiece(pieceBreakdown.get(currentPiece).get(indexOfPeerName), fileName, currentPiece), 0, answer, 0, sizeOfThisPiece);
+
+                    System.out.println("Anaswer = " + answer);
 
                     if (answer == null) {
                         // Request unsuccesful; handle here
