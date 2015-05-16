@@ -22,15 +22,14 @@ public class TrackerFile {
 	private static ArrayList<String> peersWithFile;
 	private static int numPieces;
 
-
-	public TrackerFile(String fileName_, String peerName, int peerPort, int fileSize, int numPieces_) {
-		peersWithFile = new ArrayList<String>();
-		fileName = fileName_;
+	public TrackerFile(String fileName, String peerName, int peerPort, String peerHost, int fileSize, int numPieces) {
+		this.peersWithFile = new ArrayList<String>();
+		this.fileName = fileName;
 		String size = Integer.toString(fileSize);
-		String temp = peerName + ":" + Integer.toString(peerPort);
-		peersWithFile.add(size);
-		peersWithFile.add(temp);
-		numPieces = numPieces_;
+		String temp = peerName + ":" + Integer.toString(peerPort) + ";" + peerHost;
+		this.peersWithFile.add(size);
+		this.peersWithFile.add(temp);
+		this.numPieces = numPieces;
     }
 
 	public int getNumPieces() { return numPieces; }
@@ -45,8 +44,8 @@ public class TrackerFile {
 
 	public ArrayList<String> getPeerList() { return peersWithFile; }
 
-	public void addPeer(String name, int portNum) { 
-		String temp = name + ":" + Integer.toString(portNum);
+	public void addPeer(String name, int portNum, String host) { 
+		String temp = name + ":" + Integer.toString(portNum) + ";" + host;
 		peersWithFile.add(temp);
 	}
 
