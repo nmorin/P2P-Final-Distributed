@@ -6,15 +6,16 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.*;
-import java.net.InetAddress;
 
 import java.util.Scanner;
 import java.util.Random;
 import java.util.*;
 import java.util.ArrayList.*;
+import java.util.Timer;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.InetAddress;
 
 import java.rmi.*;
 import java.rmi.registry.Registry;
@@ -272,6 +273,8 @@ public class Peer implements PeerInterface {
 
                 if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
 
+                print("peername = " + peerName + " filename = " + fileName);
+
                 peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
 
                 for (Integer piece : peerHasMe) {
@@ -292,13 +295,13 @@ public class Peer implements PeerInterface {
         int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
 
-        System.out.print("LIST NUMS: ");
-        for (int i = 0; i < numPieces; i++) {
-            numsInList[i] = pieceBreakdown.get(i).size();
-            indexArray[i] = i;
-            System.out.print(numsInList[i] + ", ");
-        }
-        System.out.println();
+        // System.out.print("LIST NUMS: ");
+        // for (int i = 0; i < numPieces; i++) {
+        //     numsInList[i] = pieceBreakdown.get(i).size();
+        //     indexArray[i] = i;
+        //     System.out.print(numsInList[i] + ", ");
+        // }
+        // System.out.println();
 
         // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
         for (int i = 0; i < numPieces; i++) {
@@ -315,11 +318,11 @@ public class Peer implements PeerInterface {
             }
         }
 
-        System.out.print("AFTER: ");
-        for (int i = 0; i < numPieces; i++) {
-            System.out.print(indexArray[i] + ", ");
-        }
-        System.out.println();
+        // System.out.print("AFTER: ");
+        // for (int i = 0; i < numPieces; i++) {
+        //     System.out.print(indexArray[i] + ", ");
+        // }
+        // System.out.println();
 
         return indexArray;
     }
