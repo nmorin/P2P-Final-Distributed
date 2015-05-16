@@ -20,7 +20,8 @@ public class Tracker implements TrackerInterface {
 		if (trackerFiles.containsKey(fileName)) {
 			TrackerFile temp = trackerFiles.get(fileName);
 			response = temp.getPeerList();
-			if(!temp.getPeerList().contains(name)) {
+			String nameFormat = name + ":" + Integer.toString(portNum) + ";" + host;
+			if(!temp.getPeerList().contains(nameFormat)) {
 				temp.addPeer(name, portNum, host);
 			}
 			System.out.println("Yes, I have file " + fileName);
