@@ -389,7 +389,7 @@ public class Peer implements PeerInterface {
             //      if finish downloading: 'finish downloading'                
             //
 
-            RandomAccessFile outFile = new RandomAccessFile("OUTPUT"+fileName, "rw");
+            RandomAccessFile outFile = new RandomAccessFile(fileName, "rw");
             int numPieces = myFiles.get(fileName).getNumPieces();
             int[] indexArray = new int[numPieces];
             // copies into index array sorted indices
