@@ -36,7 +36,7 @@ public class Tracker implements TrackerInterface {
 		if (trackerFiles.containsKey(fileName)) { 
 			System.out.println("A file by that name is already in tracker's database");
 			String nameFormat = peerName + ":" + Integer.toString(peerPort) + ";" + host;
-			if (trackerFiles.get(fileName).getPeerList().contains(nameFormat)) {
+			if (!trackerFiles.get(fileName).getPeerList().contains(nameFormat)) {
 				trackerFiles.get(fileName).addPeer(peerName, peerPort, host);
 			}
 			return; 

@@ -32,7 +32,7 @@ public class Peer implements PeerInterface {
     private static boolean rareTest = false;
     private static Timer timer;
 
-    private static final int PIECE_SIZE = 180;
+    private static final int PIECE_SIZE = 6400;
 
     private static boolean alreadyConnectedToTracker = false;
     // private static final String TRACKER_IP = "localhost";
@@ -320,7 +320,7 @@ public class Peer implements PeerInterface {
 
                 if (!didGetPieces) {
                     System.out.println("One peer is unresponsive, moving to next");
-                    peerStubs.remove(peerName);
+                    if (peerStubs.containsKey(peerName)) { peerStubs.remove(peerName); }
                     continue;
                 }
 
@@ -536,7 +536,8 @@ public class Peer implements PeerInterface {
         Scanner keyboard = new Scanner(System.in);
         String fileName = "YOLO.txt";
 
-        while (true && keyboard.hasNextLine()) {
+        // while (true && keyboard.hasNextLine()) {
+        while (true) {
             System.out.println("Enter a command");
             // if (keyboard.nextLine() == null) { 
             //     print("why");
