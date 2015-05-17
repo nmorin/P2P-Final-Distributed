@@ -1,1 +1,64 @@
-hello
+README for P2P File Sharing System
+
+Megan Maher and Nicole Morin
+Bowdoin College Class of 2016
+Distributed Systems, Spring 2015
+
+We have two main classes in our system:
+
+	Tracker.java ->	Our Tracker is the main node in the system. It keeps track of who has
+					which pieces of a certain file, and can return the file list to any 
+					Peer who asks for it. The Tracker can handle 'seed' requests from 
+					Peers, which adds a file to the hash map of file systems, and handles
+					'query' requests, when a Peer is asking for who has a certain file.
+					There is a single tracker in our system, with a hardcoded IP address.
+
+	Peer.java ->	All nodes but our Tracker are Peers. They can seed files to the Tracker
+					so that other Peers may download the file, request to download a given
+					file from another Peer, ask the Tracker for who has a certain file,
+					and can handle the requests from other Peers. The tracker IP address is
+					hardcoded into this file.
+
+To compile our code, use 'make'.
+
+Running the code:
+
+	Tracker ->
+
+		java -Djava.rmi.server.hostname=52.7.147.25 Tracker
+
+		The IP address of our Tracker is hardcoded into the code. We have one tracker
+		that every party must use. Therefore, the only way to run the Tracker is as
+		stated above, from the machine with the public IP: '52.7.147.25'. This is a
+		machine from Amazon in Virgina, USA.
+
+	Peer ->
+
+		java -Djava.rmi.server.hostname=<IP Address> Peer <IP Address> <Port Number> <Name>
+
+			This, unlike the Tracker, has much more variable commandline arguments: 
+
+		<IP Address>		Your IP Address (notice you type it twice)
+		<Port Number>		The port number you are binding yourself to, where other Peers can find you
+		<Name>				Choose a name for yourself: How you will be known as on the system
+
+
+Command Line as a Peer:
+
+	Peers have a number of options, specified through the command line once the program is running.
+
+		request <fileName>
+
+			Will request and download the file from Peers currently in the system
+
+		seed <fileName>
+
+			Tells the tracker that you have the file, which allows others on the system to
+			download it from you
+
+		exit
+
+			Exits the system!
+
+	Any other syntax is not processed. Any fileName that is not valid is not processed.
+

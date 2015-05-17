@@ -1,3 +1,15 @@
+/*
+ * Peer file for P2P System
+ * Implements RMI
+ *
+ * 
+ * Megan Maher and Nicole Morin
+ * Bowdoin College Class of 2016
+ * Distributed Systems, Spring 2015
+ * Last Modified: May 16, 2015
+ *
+ */
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,7 +41,7 @@ public class Peer implements PeerInterface {
     private static String myName;
     private static String myHost;
     private static int myPortNum;
-    private static boolean rareTest = false;
+    private static boolean rareTest = false;        // for testing only
     private static Timer timer;
 
     private static final int PIECE_SIZE = 6400;
@@ -57,6 +69,7 @@ public class Peer implements PeerInterface {
         myFiles = new HashMap<String, PeerFile>();
 	}
 
+    // RMI Method -> handles another peer asking for a file piece
     public byte[] requestFile(String fileName, int piece) {
         try {
             RandomAccessFile file = new RandomAccessFile(fileName, "r");
@@ -86,6 +99,7 @@ public class Peer implements PeerInterface {
         return null;
     }
 
+    /* The last piece of a file is smaller. Get the correct piece size */
     private static int getThisPieceSize(PeerFile file, int pieceNum) {
         if ((pieceNum+1)*PIECE_SIZE > file.getSize()) {
             return file.getSize() - (pieceNum)*PIECE_SIZE ;
@@ -93,26 +107,11 @@ public class Peer implements PeerInterface {
         return PIECE_SIZE;
     }
 
-    /* Returns a list of the pieces this peer has of the specified file */
+    /* (RMI METHOD) Returns a list of the pieces this peer has of the specified file */
     public ArrayList<Integer> requestPieceInfo(String fileName) {
-        // int size = 0;
-        // File f = new File(fileName);
-        // size = (int) f.length();
-        // int numpiece = getNumPieces(size);
-        // ArrayList<Integer> temp = new ArrayList<Integer>();
-        // for (int i = 0; i < numpiece; i++) {
-        //     temp.add((Integer)i);
-        // }
-        // return temp;
+
         return myFiles.get(fileName).getCompletePieces();
     }
-
-    // private String createRandomID() {
-    //     Random rand = new Random();
-    //     int id = rand.nextInt((ID_MAX - ID_MIN) + 1) + ID_MIN;
-    //     String idString = Integer.toString(id);
-    //     return idString;
-    // }
 
     /* Creates and binds an instance of the peer's registry so it can
     be accessed by others and make connections */
@@ -128,6 +127,7 @@ public class Peer implements PeerInterface {
         }
     }
 
+    /* Connects to a peer */
     private static void connectToPeer(String peerName, int peerPort, String host) {
         try {
             // Checks if peer is already bound or not
@@ -143,7 +143,7 @@ public class Peer implements PeerInterface {
             System.out.println("Found peer " + peerName);
 
         } catch (Exception e) {
-            System.out.println("Peer doesn't exist right now. They have left the system!");
+            // System.out.println("Peer doesn't exist right now. They have left the system!");
         }
     }
 
@@ -155,6 +155,7 @@ public class Peer implements PeerInterface {
         return size;
     }
 
+    // Connects to the Tracker with hardcoded IP address
     private static void connectToTracker() {
         if (alreadyConnectedToTracker) { return; }
         try {
@@ -189,6 +190,7 @@ public class Peer implements PeerInterface {
         myFiles.put(fileName, newFile);
     }
 
+    // Just a helper method to print out a List of Lists!
     private static void printDoubleList(ArrayList<ArrayList<String>> list) {
         int counter = 0;
         for (ArrayList<String> firstList : list) {
@@ -216,38 +218,17 @@ public class Peer implements PeerInterface {
             ArrayList<String> peersWithFile;
             peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
 
-
-            // ExecutorService executor = Executors.newSingleThreadExecutor();
-            // Future<Object> future = executor.submit(new Callable<Object>() {
-            //     @Override
-            //     public Object call() throws Exception {
-            //         ArrayList<String> tryPeersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
-            //         return tryPeersWithFile;
-            //     }
-            // });
-            // try {
-            //     peersWithFile = (ArrayList<String>) future.get(5, TimeUnit.SECONDS); //timeout is in 5 seconds
-            // } catch (TimeoutException e) {
-            //     peersWithFile = null;
-            //     print("Timeout occured trying to query the tracker; request fails");
-
-            // }
-            // executor.shutdownNow();
-
-
-
             int fileSize = 0; //bytes
             if (peersWithFile != null) {
                 // System.out.println("Found peer list!");
                 fileSize = Integer.parseInt(peersWithFile.get(0));
                 peersWithFile.remove(0);
-
             } else {
                 System.out.println("File not found");
                 return;
             }
 
-            // returns num totalpieces
+            // returns num totalpieces 
             int numFilePieces = getNumPieces(fileSize);
 
             // Check if already have record of that file in myFiles; if not, add
@@ -261,9 +242,6 @@ public class Peer implements PeerInterface {
             // The elements of the inner array lists are peer information of peers with that pieces
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
             pieceBreakdown.addAll(getFilePieces(fileName, numFilePieces, peersWithFile));
-            // System.out.println("Broke down pieces!");
-
-            // printDoubleList(pieceBreakdown);
 
             long startDownloadTime = System.nanoTime();
             downloadFile(fileName, pieceBreakdown);
@@ -281,19 +259,23 @@ public class Peer implements PeerInterface {
         print("\nTOTAL REQUEST FOR " + fileName + " TOOK: " + duration + " MILLISECONDS");
     }
 
+    // Returns a list of lists: Which peers have which pieces of the file. Queries peers who have the file.
     private static ArrayList<ArrayList<String>> getFilePieces(String fileName, int numFilePieces, ArrayList<String> peersWithFile){
         try {
             ArrayList<ArrayList<String>> pieceBreakdown = new ArrayList<ArrayList<String>>();
+            // Init placeholder for outside arraylist
             for (int i = 0; i < numFilePieces; i++) {
                 ArrayList<String> temp = new ArrayList<String>();
                 pieceBreakdown.add(temp);
             }
 
-            // For every peer who the tracker says the file has, request information on how many pieces 
-            // they have
+            // For every peer who the tracker says the file has, request information on how many pieces they have
             for (String peerInfo : peersWithFile) {
                 ArrayList<Integer> peerHasMe = new ArrayList<Integer>();
 
+                // String in format:
+                // peerName:portNumber;host
+                // Divide it up ->
                 int colonIndex = peerInfo.indexOf(":");
                 int semiColonIndex = peerInfo.indexOf(";");
                 if (colonIndex == -1) { return null; } //error
@@ -305,21 +287,23 @@ public class Peer implements PeerInterface {
 
                 if (peerName.equals(myName)) { continue; } // don't want to ask myself for file pieces!
 
-                int askCounter = 0;
-                boolean didGetPieces = false;
+                int askCounter = 0;             // How many times have I asked for the file pieces?
+                boolean didGetPieces = false;   // Did I get the pieces from the peer?
+
+                // Sometimes there is a small error, so we retry requesting twice
                 while (askCounter < 2) {
                     try {
                         peerHasMe.addAll(peerStubs.get(peerName).requestPieceInfo(fileName));
                         askCounter = 2;
                         didGetPieces = true;
                     } catch (Exception e) {
-                        System.out.println("catching exception in piece info");
+                        // System.out.println("catching exception in piece info");
                         askCounter++;
                     }
                 }
 
                 if (!didGetPieces) {
-                    System.out.println("One peer is unresponsive, moving to next");
+                    // System.out.println("One peer is unresponsive, moving to next");
                     if (peerStubs.containsKey(peerName)) { peerStubs.remove(peerName); }
                     continue;
                 }
@@ -333,12 +317,13 @@ public class Peer implements PeerInterface {
             return pieceBreakdown;
 
         } catch (Exception e) {
-            System.out.println("Exception in 'getFilePieces'");
+            // System.out.println("Exception in 'getFilePieces'");
             e.printStackTrace();
         }
         return null;
     }
 
+    // Sorts the array of piece numbers by the length of the 'piece list'
     private static int[] sortArrayOfIndices(int numPieces, ArrayList<ArrayList<String>> pieceBreakdown) {
         int[] numsInList = new int[numPieces];
         int[] indexArray = new int[numPieces];
@@ -346,10 +331,9 @@ public class Peer implements PeerInterface {
         for (int i = 0; i < numPieces; i++) {
             numsInList[i] = pieceBreakdown.get(i).size();
             indexArray[i] = i;
-            // System.out.print(indexArray[i] + ", ");
         }
 
-        // TODO: this is a VERY DUMB BUBBLE SORT way to sort... make it faster
+        // This is a VERY DUMB BUBBLE SORT way to sort... sorry!
         for (int i = 0; i < numPieces; i++) {
             for (int j = i+1; j < numPieces; j++) {
                 if (numsInList[i] > numsInList[j]) {
@@ -363,45 +347,28 @@ public class Peer implements PeerInterface {
                 }
             }
         }
-
-        // System.out.print("AFTER: ");
-        // for (int i = 0; i < numPieces; i++) {
-        //     System.out.print(indexArray[i] + ", ");
-        // }
-        // System.out.println();
-
         return indexArray;
     }
 
+
+    // Downloads file in pieces, dividing download amongst peers
     private static void downloadFile(String fileName, ArrayList<ArrayList<String>> pieceBreakdown) {
         try {
-
-            // get count in piece breakdown
-            // get sorted list
-            // have array of indices: {2, 3, 1, 5, 4, 0} says 2 has the least, 3 second least
-            //              array is called indexArray
-            // get min
-            // get list
-            // if peer list at index = null, re-ask tracker, reinit stuff, resort
-            // else:
-            // find a peer in list: not being downloaded from
-            //      'start downloaindg' that piece from that peer
-            //      if finish downloading: 'finish downloading'                
-            //
-
+            // Opens up a Random Access File to output to
             RandomAccessFile outFile = new RandomAccessFile(fileName, "rw");
-            int numPieces = myFiles.get(fileName).getNumPieces();
-            int[] indexArray = new int[numPieces];
-            // copies into index array sorted indices
+
+            int numPieces = myFiles.get(fileName).getNumPieces();   // Number of pieces we have broked the file into
+            int[] indexArray = new int[numPieces];                  // Will hold an array of piece numbers, sorted by
+                                                                    //      the number of peers who have that piece
+                                                                    //      number. Smallest to largest. (Rarest first)
+            // Copies these sorted indices into the indexArray
             System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
 
-            // Iterate through pieces and request them
-            int counter = -1;
+            int counter = -1;   // Keeps track of the current piece we are talking about (will loop within piece range)
+            int reAskTrackerForPiece = -1;  // Holds which piece last had no peers in its list
+            int continueCounter = 0;    // Keeps track of the number of times we are unable to place a request
 
-            int reAskTrackerForPiece = -1;
-            int continueCounter = 0;
-
-            // myFiles.get(fileName).printLists();
+            // Loop through all pieces in order until we have downloaded everything
             while (!myFiles.get(fileName).getPiecesNeeded().isEmpty() ||
                    !myFiles.get(fileName).getDownloadingPieces().isEmpty()) {
 
@@ -410,14 +377,12 @@ public class Peer implements PeerInterface {
                 int currentPiece = indexArray[counter];     // local variable for readability 
 
                 if (!myFiles.get(fileName).needsPiece(currentPiece)) {
-                    // System.out.println("continues");
-                    continue; // I am already processing this piece
+                    continue; // I am already processing this piece, don't try to download again
                 }
 
                 if (pieceBreakdown.get(currentPiece).isEmpty() || continueCounter>=10) {
-                    // System.out.println("TRYING TO RE-REQUEST");
-                    if (continueCounter >= 10) { continueCounter = 0; }
-                    else { reAskTrackerForPiece = currentPiece; }
+                    if (continueCounter >= 10) { continueCounter = 0; } // reset continueCounter
+                    else { reAskTrackerForPiece = currentPiece; }       // otherwise we have gotten here because there was empty list
 
                     if (reAskTrackerForPiece == currentPiece){
                         System.out.println("Nobody has piece " + currentPiece + " so I am not downloading file!");
@@ -426,11 +391,13 @@ public class Peer implements PeerInterface {
 
                     // re-ask tracker for list of peers
                     ArrayList<String> peersWithFile = leadTrackerStub.query(fileName, myName, myPortNum, myHost);
-                    if (peersWithFile != null) { peersWithFile.remove(0); } // first index is file size
-                    else { return; }
+                    if (peersWithFile != null) { peersWithFile.remove(0); }     // first index is file size
+                    else { return; }    // error getting list from Tracker -> stop downloading
 
-                    int askCounter = 0;
-                    boolean didGetPieceBreakdown = false;
+                    int askCounter = 0; // How many times have we asked for file pieces?
+                    boolean didGetPieceBreakdown = false; // Have we actually gotten the piece breakdown?
+
+                    // Sometimes there is a small error, so we retry requesting file pieces up to 3 times
                     while (askCounter < 3) {
                         try {
                             ArrayList<ArrayList<String>> tempBreakdown = new ArrayList<ArrayList<String>>();
@@ -441,41 +408,42 @@ public class Peer implements PeerInterface {
 
                             // resort "rarest first" array
                             System.arraycopy(sortArrayOfIndices(numPieces, pieceBreakdown), 0, indexArray, 0, numPieces);
-                            askCounter = 3;
+                            askCounter = 3; // end loop
                             didGetPieceBreakdown = true;
                         } catch (Exception e) {
-                            System.out.println("catching exception");
+                            // System.out.println("catching exception");
                             askCounter++;
                         }
                     }
 
                     if (!didGetPieceBreakdown) {
-                        System.out.println("Peers are unresponsive");
+                        // System.out.println("Peers are unresponsive");
                         continue;
                     }
                 }
 
+                // Loops throgh peers who have this piece of the file: will start a new thread if we want to request
                 for (int indexOfPeerName = 0; indexOfPeerName < pieceBreakdown.get(currentPiece).size(); indexOfPeerName++) {
                     String peerName = pieceBreakdown.get(currentPiece).get(indexOfPeerName);
 
                     if (myFiles.get(fileName).getCurrentlyDownloadingFrom().contains(peerName)) {
                         continueCounter++;
-                        // System.out.println("Continue part 2");
                         continue;   // don't want to download from someone we are already downloading from
                     }
-                    //otherwise download from k:
+
+                    //otherwise download from k
                     myFiles.get(fileName).startDownloadingPiece(currentPiece, peerName);
                     int sizeOfThisPiece = getThisPieceSize(myFiles.get(fileName), currentPiece);
                     // System.out.println("size of this piece = " + sizeOfThisPiece);
 
+                    // Used to test only -> stops downloads after halfway completed
                     if (rareTest && myFiles.get(fileName).getNumComplete() > numPieces/2) {
                         break;
                     }
 
-                    // print("Making a thread, oh god....");
                     ConcurrentPieceRequest newPieceRequest = new ConcurrentPieceRequest(fileName, peerName, currentPiece, sizeOfThisPiece, outFile);
                     newPieceRequest.start();
-                    break;
+                    break; // Don't ask more than one peer for same piece of the file
                 }
                 if (rareTest && myFiles.get(fileName).getNumComplete() >= numPieces/2) {
                     break;
@@ -485,7 +453,7 @@ public class Peer implements PeerInterface {
             
 
         } catch (Exception e) {
-            System.out.println("Exception in 'downloadFile'");
+            // System.out.println("Exception in 'downloadFile'");
             e.printStackTrace();
         }
     }
@@ -524,7 +492,7 @@ public class Peer implements PeerInterface {
             byte[] answer = peerStubs.get(peerName).requestFile(fileName, piece);
             return answer;
         } catch (Exception e) {
-            System.out.println("Exception");
+            // System.out.println("Exception");
             e.printStackTrace();
         }
         return null;
